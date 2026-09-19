@@ -23,7 +23,7 @@
 
     /* Glassmorphism Command Center UI */
     #dashboard {
-      position: absolute; top: 20px; left: 20px; width: 420px; max-height: 90vh; overflow-y: auto;
+      position: absolute; top: 20px; left: 20px; width: 420px; max-height: calc(100vh - 160px); overflow-y: auto;
       background: rgba(4, 10, 20, 0.65); 
       border: 1px solid rgba(0, 229, 255, 0.2); 
       border-top: 3px solid #00e5ff;
@@ -83,10 +83,10 @@
 
   <div id="dashboard">
     <h2>CLEARSHOT <span class="badge">LIVE</span></h2>
-    <div class="subtext">AI-Optimized Sensor Tasking</div>
+    <div class="subtext">AI-Optimized Image Acquisition</div>
 
     <div class="instructions">
-      <strong>STANDBY:</strong> Select a computed pass below to initiate intercept vector.
+      <strong>STANDBY:</strong> Select a predicted pass below to initiate intercept vector.
     </div>
 
     <div style="font-family: 'Share Tech Mono'; font-size: 11px; margin-bottom: 4px; color: #829ab1; text-transform: uppercase;">
@@ -218,7 +218,6 @@
         contract.satellites.forEach(satConfig => {
           const satrec = satellite.twoline2satrec(satConfig.tle1, satConfig.tle2);
           const satPosProp = new Cesium.SampledPositionProperty();
-          const groundPosProp = new Cesium.SampledPositionProperty();
           const swathRadiusKm = satConfig.swathKm / 2.0;
           
           for (let t = 0; t <= durationSeconds; t += 30) {
@@ -234,20 +233,33 @@
               const alt = geodetic.height * 1000;
 
               satPosProp.addSample(time, Cesium.Cartesian3.fromDegrees(lon, lat, alt));
-              groundPosProp.addSample(time, Cesium.Cartesian3.fromDegrees(lon, lat, 0));
             }
           }
+
+          // force Cesium to curve the path using Lagrange polynomials instead of straight lines
+          satPosProp.setInterpolationOptions({
+              interpolationDegree: 5,
+              interpolationAlgorithm: Cesium.LagrangePolynomialApproximation
+          });
 
           viewer.entities.add({
             position: satPosProp,
             orientation: new Cesium.VelocityOrientationProperty(satPosProp),
             model: { uri: '../satellite.glb', minimumPixelSize: 64, maximumScale: 20000 },
             point: { pixelSize: 4, color: Cesium.Color.fromCssColorString(satConfig.colorHex) },
-            path: { resolution: 60, material: new Cesium.PolylineGlowMaterialProperty({ glowPower: 0.1, color: Cesium.Color.fromCssColorString(satConfig.colorHex).withAlpha(0.8) }), width: 2 }
+            path: { resolution: 120, material: new Cesium.PolylineGlowMaterialProperty({ glowPower: 0.1, color: Cesium.Color.fromCssColorString(satConfig.colorHex).withAlpha(0.8) }), width: 2 }
           });
 
           viewer.entities.add({
-            position: groundPosProp,
+            // FIX 2: Dynamically project the footprint exactly onto the surface to prevent underground sinking
+            position: new Cesium.CallbackProperty((time) => {
+                const sPos = satPosProp.getValue(time);
+                if (sPos) {
+                    const carto = Cesium.Cartographic.fromCartesian(sPos);
+                    return Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, 0);
+                }
+                return undefined;
+            }, false),
             ellipse: {
               semiMinorAxis: satConfig.swathKm * 500, semiMajorAxis: satConfig.swathKm * 500,
               material: new Cesium.ColorMaterialProperty(new Cesium.CallbackProperty((time) => {
@@ -265,10 +277,12 @@
 
           viewer.entities.add({
             polyline: {
+              // FIX 3: Re-map the dotted nadir line to follow the clamped surface point
               positions: new Cesium.CallbackProperty((time) => {
                 const sPos = satPosProp.getValue(time);
-                const gPos = groundPosProp.getValue(time);
-                if (!sPos || !gPos) return [];
+                if (!sPos) return [];
+                const carto = Cesium.Cartographic.fromCartesian(sPos);
+                const gPos = Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, 0);
                 return [sPos, gPos]; 
               }, false),
               width: 2,
@@ -301,7 +315,7 @@
         
         // UI Loading State
         document.getElementById('target-coords').innerText = `CALCULATING OVERRIDE...`;
-        document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#00e5ff;">Retasking Swarm Constellation...</td></tr>`;
+        document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#00e5ff;">Predicting Clear-Sky Windows...</td></tr>`;
         viewer.entities.removeAll();
         
         try {
