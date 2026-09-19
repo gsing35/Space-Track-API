@@ -138,8 +138,9 @@
 
         // Populate Dashboard Table from JSON Passes
         target.passes.forEach(pass => {
-          const startTime = Cesium.JulianDate.fromIso8601(pass.start_utc);
-          const timeStr = pass.start_utc.substring(11, 16); 
+          // Use peak_utc so the camera jumps to the actual overlap
+          const peakTime = Cesium.JulianDate.fromIso8601(pass.peak_utc);
+          const timeStr = pass.peak_utc.substring(11, 16);
           
           const verdictColor = pass.verdict === 'good' ? '#00ff00' : (pass.verdict === 'bad' ? '#ff3333' : '#f4c430');
           const scoreStr = (pass.scores.model * 100).toFixed(0) + '%';
@@ -155,7 +156,8 @@
           `;
           
           row.onclick = () => { 
-            viewer.clock.currentTime = Cesium.JulianDate.addSeconds(startTime, -30, new Cesium.JulianDate()); 
+            // Jump to exactly 15 seconds before the perfect overlap
+            viewer.clock.currentTime = Cesium.JulianDate.addSeconds(peakTime, -15, new Cesium.JulianDate()); 
           };
           
           tbody.appendChild(row);
