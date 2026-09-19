@@ -96,6 +96,22 @@
     .lead { display: block; font-size: 10px; color: #829ab1; }
     .tag-note { font-size: 10px; color: #829ab1; text-transform: uppercase; }
 
+    /* Coordinate entry */
+    #coord-form { display: flex; gap: 6px; margin-bottom: 6px; }
+    #coord-form input {
+      min-width: 0; flex: 1; background: rgba(16, 32, 56, 0.6); color: #fff;
+      border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 4px; padding: 6px 7px;
+      font-family: 'Share Tech Mono', monospace; font-size: 12px; outline: none;
+    }
+    #coord-form input:focus { border-color: #00e5ff; box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); }
+    #coord-form input#in-name { flex: 1.4; }
+    #coord-form button {
+      cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 1px;
+      color: #02060f; background: #00e5ff; border: none; border-radius: 4px; padding: 0 10px; text-transform: uppercase;
+    }
+    #coord-form button:hover { box-shadow: 0 0 10px rgba(0, 229, 255, 0.6); }
+    #coord-error { min-height: 16px; margin-bottom: 8px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #ff6b8b; }
+
     .btn-view { color: #00e5ff; font-weight: bold; background: rgba(0, 229, 255, 0.1); padding: 4px 8px; border-radius: 3px; text-transform: uppercase; font-size: 10px;}
   </style>
 </head>
@@ -116,6 +132,14 @@
       <span id="target-coords">Awaiting Telemetry...</span>
     </div>
     
+    <form id="coord-form" autocomplete="off">
+      <input id="in-lat" placeholder="LAT" inputmode="decimal" aria-label="Latitude">
+      <input id="in-lon" placeholder="LON" inputmode="decimal" aria-label="Longitude">
+      <input id="in-name" placeholder="NAME (opt.)" maxlength="80" aria-label="Target name">
+      <button type="submit">Retask</button>
+    </form>
+    <div id="coord-error"></div>
+
     <div id="acq" style="display:none"></div>
 
     <table id="passes-table">
@@ -330,6 +354,8 @@
         activeTarget = target;
         const displayName = target.name || "Custom Target";
         document.getElementById('target-coords').innerText = `${displayName} | ${target.lat.toFixed(3)}°, ${target.lon.toFixed(3)}°`;
+        document.getElementById('in-lat').value = target.lat.toFixed(4);
+        document.getElementById('in-lon').value = target.lon.toFixed(4);
 
         // Swap only the target marker; the orbits stay put
         if (targetEntity) viewer.entities.remove(targetEntity);
@@ -398,8 +424,53 @@
         }
     }
 
-    // Interactive Map Clicking (hits the live API)
-    viewer.screenSpaceEventHandler.setInputAction(async function(click) {
+    // Live retasking for any point: shared by globe clicks and typed coordinates
+    async function retask(lat, lon, name) {
+      const seq = ++requestSeq;
+      document.getElementById('coord-error').textContent = '';
+
+      // UI Loading State (orbits stay on the globe)
+      document.getElementById('target-coords').innerText = `CALCULATING OVERRIDE...`;
+      document.getElementById('acq').style.display = 'none';
+      document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#00e5ff;">Predicting Clear-Sky Windows...</td></tr>`;
+
+      let url = `http://localhost:8000/api/calculate?lat=${lat}&lon=${lon}`;
+      if (name) url += `&name=${encodeURIComponent(name)}`;
+
+      let response;
+      try {
+          response = await fetch(url);
+      } catch (error) {
+          if (seq !== requestSeq) return;
+          console.error("Live calculation failed:", error);
+          document.getElementById('target-coords').innerText = `OFFLINE`;
+          document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">Tasking Failed. API Unreachable.</td></tr>`;
+          return;
+      }
+      if (seq !== requestSeq) return;  // a newer request superseded this one
+
+      if (!response.ok) {
+          // Show the backend's reason (bad input, catalog down) instead of
+          // pretending the API is unreachable.
+          let detail = `HTTP ${response.status}`;
+          try {
+              const body = await response.json();
+              detail = typeof body.detail === 'string' ? body.detail
+                : (body.detail || []).map(d => `${(d.loc || []).slice(-1)[0]}: ${d.msg}`).join('; ') || detail;
+          } catch (_) { /* keep the status code */ }
+          if (seq !== requestSeq) return;
+          document.getElementById('target-coords').innerText = `REJECTED`;
+          document.getElementById('coord-error').textContent = detail;
+          document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">Tasking Rejected.</td></tr>`;
+          return;
+      }
+      const contract = await response.json();
+      if (seq !== requestSeq) return;
+      renderContractData(contract);
+    }
+
+    // Interactive Map Clicking
+    viewer.screenSpaceEventHandler.setInputAction(function(click) {
       const ray = viewer.camera.getPickRay(click.position);
       const intersection = viewer.scene.globe.pick(ray, viewer.scene);
       if (!intersection) return;
@@ -407,25 +478,41 @@
       const cartographic = Cesium.Cartographic.fromCartesian(intersection);
       const lat = Cesium.Math.toDegrees(cartographic.latitude);
       const lon = Cesium.Math.toDegrees(cartographic.longitude);
-      const seq = ++requestSeq;
-
-      // UI Loading State (orbits stay on the globe)
-      document.getElementById('target-coords').innerText = `CALCULATING OVERRIDE...`;
-      document.getElementById('acq').style.display = 'none';
-      document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#00e5ff;">Predicting Clear-Sky Windows...</td></tr>`;
-
-      try {
-          const response = await fetch(`http://localhost:8000/api/calculate?lat=${lat}&lon=${lon}`);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const contract = await response.json();
-          if (seq !== requestSeq) return;  // a newer click superseded this one
-          renderContractData(contract);
-      } catch (error) {
-          if (seq !== requestSeq) return;
-          console.error("Live calculation failed:", error);
-          document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">Tasking Failed. API Unreachable.</td></tr>`;
-      }
+      document.getElementById('in-lat').value = lat.toFixed(4);
+      document.getElementById('in-lon').value = lon.toFixed(4);
+      document.getElementById('in-name').value = '';
+      retask(lat, lon, '');
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // Typed coordinates. Enter in any field submits (native form behavior).
+    document.getElementById('coord-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const latText = document.getElementById('in-lat').value.trim();
+      const lonText = document.getElementById('in-lon').value.trim();
+      const lat = Number(latText);
+      const lon = Number(lonText);
+      const err = document.getElementById('coord-error');
+      if (latText === '' || !Number.isFinite(lat) || lat < -90 || lat > 90) {
+        err.textContent = 'Latitude must be a number from -90 to 90.';
+        return;
+      }
+      if (lonText === '' || !Number.isFinite(lon) || lon < -180 || lon > 180) {
+        err.textContent = 'Longitude must be a number from -180 to 180.';
+        return;
+      }
+      retask(lat, lon, document.getElementById('in-name').value.trim());
+    });
+
+    // Pasting "37.2296, -80.4139" (as copied from a map) fills both fields.
+    document.getElementById('in-lat').addEventListener('paste', (e) => {
+      const text = (e.clipboardData || window.clipboardData).getData('text');
+      const parts = text.split(/[\s,;]+/).filter(Boolean);
+      if (parts.length === 2 && parts.every(p => Number.isFinite(Number(p)))) {
+        e.preventDefault();
+        document.getElementById('in-lat').value = parts[0];
+        document.getElementById('in-lon').value = parts[1];
+      }
+    });
 
     bootSystem();
   </script>

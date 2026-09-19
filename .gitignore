@@ -5,3 +5,4 @@ __pycache__/
 config.js
 config.json
 .venv/
+.claude/
