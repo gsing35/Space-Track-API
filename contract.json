@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-09-19T04:12:00Z",
+  "horizon_hours": 72,
+  "targets": [
+    {
+      "id": "blacksburg",
+      "name": "Blacksburg, VA",
+      "lat": 37.2296,
+      "lon": -80.4139,
+      "passes": [
+        {
+          "pass_id": "blacksburg-49260-20260919T1542",
+          "satellite": "LANDSAT 9",
+          "norad_id": 49260,
+          "start_utc": "2026-09-19T15:42:00Z",
+          "peak_utc": "2026-09-19T15:46:30Z",
+          "end_utc": "2026-09-19T15:51:00Z",
+          "duration_s": 540,
+          "max_elevation_deg": 67.3,
+          "lead_time_hours": 11.5,
+          "cloud_forecast_pct": 12,
+          "scores": {
+            "model": 0.84,
+            "forecast_only": 0.88,
+            "climatology": 0.61
+          },
+          "verdict": "good"
+        }
+      ]
+    }
+  ]
+}

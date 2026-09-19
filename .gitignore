@@ -1,0 +1,4 @@
+.env
+gp_catalog.json.tmp
+__pycache__/
+*.pyc
