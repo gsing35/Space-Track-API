@@ -1,30 +1,359 @@
 {
-  "generated_at": "2026-09-19T04:12:00Z",
-  "horizon_hours": 72,
+  "generated_at": "2026-09-19T05:15:47Z",
+  "horizon_hours": 48,
+  "satellites": [
+    {
+      "id": "LANDSAT 9",
+      "swathKm": 185,
+      "colorHex": "#f4c430",
+      "tle1": "1 49260U 21088A   26261.10681602  .00000218  00000-0  58383-4 0  9993",
+      "tle2": "2 49260  98.2196 330.1185 0001510  98.4030 261.7339 14.57112776264532"
+    },
+    {
+      "id": "Sentinel-2A",
+      "swathKm": 290,
+      "colorHex": "#00ff00",
+      "tle1": "1 40697U 15028A   26261.92095446 -.00000267  00000-0 -85121-4 0  9996",
+      "tle2": "2 40697  98.5664 335.4081 0001149  81.5153 278.6160 14.30815246587136"
+    },
+    {
+      "id": "ISS (Wide FOV)",
+      "swathKm": 1200,
+      "colorHex": "#ff3333",
+      "tle1": "1 25544U 98067A   26261.78789299  .00005868  00000-0  11393-3 0  9993",
+      "tle2": "2 25544  51.6308 196.8438 0004827 155.1807 204.9414 15.49168087586262"
+    }
+  ],
   "targets": [
     {
-      "id": "blacksburg",
       "name": "Blacksburg, VA",
       "lat": 37.2296,
       "lon": -80.4139,
       "passes": [
         {
-          "pass_id": "blacksburg-49260-20260919T1542",
+          "pass_id": "LANDSAT9-20260919T1524",
           "satellite": "LANDSAT 9",
-          "norad_id": 49260,
-          "start_utc": "2026-09-19T15:42:00Z",
-          "peak_utc": "2026-09-19T15:46:30Z",
-          "end_utc": "2026-09-19T15:51:00Z",
-          "duration_s": 540,
-          "max_elevation_deg": 67.3,
-          "lead_time_hours": 11.5,
-          "cloud_forecast_pct": 12,
+          "start_utc": "2026-09-19T15:24:08Z",
+          "peak_utc": "2026-09-19T15:28:39Z",
+          "end_utc": "2026-09-19T15:33:08Z",
+          "max_elevation_deg": 42.0,
+          "cloud_forecast_pct": 88,
           "scores": {
-            "model": 0.84,
-            "forecast_only": 0.88,
-            "climatology": 0.61
+            "model": 0.26
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "Sentinel-2A-20260919T1528",
+          "satellite": "Sentinel-2A",
+          "start_utc": "2026-09-19T15:28:44Z",
+          "peak_utc": "2026-09-19T15:33:24Z",
+          "end_utc": "2026-09-19T15:38:02Z",
+          "max_elevation_deg": 32.7,
+          "cloud_forecast_pct": 88,
+          "scores": {
+            "model": 0.22
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "LANDSAT9-20260919T1702",
+          "satellite": "LANDSAT 9",
+          "start_utc": "2026-09-19T17:02:47Z",
+          "peak_utc": "2026-09-19T17:06:02Z",
+          "end_utc": "2026-09-19T17:09:17Z",
+          "max_elevation_deg": 18.6,
+          "cloud_forecast_pct": 51,
+          "scores": {
+            "model": 0.38
+          },
+          "verdict": "marginal"
+        },
+        {
+          "pass_id": "Sentinel-2A-20260919T1708",
+          "satellite": "Sentinel-2A",
+          "start_utc": "2026-09-19T17:08:22Z",
+          "peak_utc": "2026-09-19T17:12:41Z",
+          "end_utc": "2026-09-19T17:17:00Z",
+          "max_elevation_deg": 27.2,
+          "cloud_forecast_pct": 51,
+          "scores": {
+            "model": 0.42
+          },
+          "verdict": "marginal"
+        },
+        {
+          "pass_id": "ISS(WideFOV)-20260919T1949",
+          "satellite": "ISS (Wide FOV)",
+          "start_utc": "2026-09-19T19:49:08Z",
+          "peak_utc": "2026-09-19T19:52:00Z",
+          "end_utc": "2026-09-19T19:54:53Z",
+          "max_elevation_deg": 26.1,
+          "cloud_forecast_pct": 23,
+          "scores": {
+            "model": 0.58
           },
           "verdict": "good"
+        },
+        {
+          "pass_id": "ISS(WideFOV)-20260919T2125",
+          "satellite": "ISS (Wide FOV)",
+          "start_utc": "2026-09-19T21:25:43Z",
+          "peak_utc": "2026-09-19T21:28:44Z",
+          "end_utc": "2026-09-19T21:31:46Z",
+          "max_elevation_deg": 30.0,
+          "cloud_forecast_pct": 7,
+          "scores": {
+            "model": 0.69
+          },
+          "verdict": "good"
+        },
+        {
+          "pass_id": "ISS(WideFOV)-20260920T0219",
+          "satellite": "ISS (Wide FOV)",
+          "start_utc": "2026-09-20T02:19:59Z",
+          "peak_utc": "2026-09-20T02:22:31Z",
+          "end_utc": "2026-09-20T02:25:02Z",
+          "max_elevation_deg": 19.5,
+          "cloud_forecast_pct": 9,
+          "scores": {
+            "model": 0.63
+          },
+          "verdict": "good"
+        },
+        {
+          "pass_id": "LANDSAT9-20260920T0227",
+          "satellite": "LANDSAT 9",
+          "start_utc": "2026-09-20T02:27:58Z",
+          "peak_utc": "2026-09-20T02:32:18Z",
+          "end_utc": "2026-09-20T02:36:39Z",
+          "max_elevation_deg": 36.7,
+          "cloud_forecast_pct": 9,
+          "scores": {
+            "model": 0.71
+          },
+          "verdict": "good"
+        },
+        {
+          "pass_id": "Sentinel-2A-20260920T0244",
+          "satellite": "Sentinel-2A",
+          "start_utc": "2026-09-20T02:44:20Z",
+          "peak_utc": "2026-09-20T02:49:08Z",
+          "end_utc": "2026-09-20T02:53:58Z",
+          "max_elevation_deg": 39.8,
+          "cloud_forecast_pct": 9,
+          "scores": {
+            "model": 0.72
+          },
+          "verdict": "good"
+        },
+        {
+          "pass_id": "ISS(WideFOV)-20260920T0356",
+          "satellite": "ISS (Wide FOV)",
+          "start_utc": "2026-09-20T03:56:14Z",
+          "peak_utc": "2026-09-20T03:59:30Z",
+          "end_utc": "2026-09-20T04:02:45Z",
+          "max_elevation_deg": 51.9,
+          "cloud_forecast_pct": 78,
+          "scores": {
+            "model": 0.36
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "LANDSAT9-20260920T0406",
+          "satellite": "LANDSAT 9",
+          "start_utc": "2026-09-20T04:06:37Z",
+          "peak_utc": "2026-09-20T04:10:07Z",
+          "end_utc": "2026-09-20T04:13:37Z",
+          "max_elevation_deg": 20.2,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.09
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "Sentinel-2A-20260920T0424",
+          "satellite": "Sentinel-2A",
+          "start_utc": "2026-09-20T04:24:44Z",
+          "peak_utc": "2026-09-20T04:28:42Z",
+          "end_utc": "2026-09-20T04:32:41Z",
+          "max_elevation_deg": 21.9,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.1
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "LANDSAT9-20260920T1432",
+          "satellite": "LANDSAT 9",
+          "start_utc": "2026-09-20T14:32:06Z",
+          "peak_utc": "2026-09-20T14:33:16Z",
+          "end_utc": "2026-09-20T14:34:27Z",
+          "max_elevation_deg": 10.8,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.05
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "Sentinel-2A-20260920T1500",
+          "satellite": "Sentinel-2A",
+          "start_utc": "2026-09-20T15:00:02Z",
+          "peak_utc": "2026-09-20T15:03:20Z",
+          "end_utc": "2026-09-20T15:06:37Z",
+          "max_elevation_deg": 16.8,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.07
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "LANDSAT9-20260920T1606",
+          "satellite": "LANDSAT 9",
+          "start_utc": "2026-09-20T16:06:41Z",
+          "peak_utc": "2026-09-20T16:11:25Z",
+          "end_utc": "2026-09-20T16:16:07Z",
+          "max_elevation_deg": 66.9,
+          "cloud_forecast_pct": 87,
+          "scores": {
+            "model": 0.38
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "Sentinel-2A-20260920T1638",
+          "satellite": "Sentinel-2A",
+          "start_utc": "2026-09-20T16:38:01Z",
+          "peak_utc": "2026-09-20T16:43:03Z",
+          "end_utc": "2026-09-20T16:48:04Z",
+          "max_elevation_deg": 51.6,
+          "cloud_forecast_pct": 87,
+          "scores": {
+            "model": 0.31
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "ISS(WideFOV)-20260920T1902",
+          "satellite": "ISS (Wide FOV)",
+          "start_utc": "2026-09-20T19:02:34Z",
+          "peak_utc": "2026-09-20T19:04:33Z",
+          "end_utc": "2026-09-20T19:06:32Z",
+          "max_elevation_deg": 14.8,
+          "cloud_forecast_pct": 2,
+          "scores": {
+            "model": 0.65
+          },
+          "verdict": "good"
+        },
+        {
+          "pass_id": "ISS(WideFOV)-20260920T2037",
+          "satellite": "ISS (Wide FOV)",
+          "start_utc": "2026-09-20T20:37:45Z",
+          "peak_utc": "2026-09-20T20:41:02Z",
+          "end_utc": "2026-09-20T20:44:20Z",
+          "max_elevation_deg": 49.2,
+          "cloud_forecast_pct": 25,
+          "scores": {
+            "model": 0.67
+          },
+          "verdict": "good"
+        },
+        {
+          "pass_id": "ISS(WideFOV)-20260920T2217",
+          "satellite": "ISS (Wide FOV)",
+          "start_utc": "2026-09-20T22:17:18Z",
+          "peak_utc": "2026-09-20T22:18:29Z",
+          "end_utc": "2026-09-20T22:19:40Z",
+          "max_elevation_deg": 11.4,
+          "cloud_forecast_pct": 12,
+          "scores": {
+            "model": 0.58
+          },
+          "verdict": "good"
+        },
+        {
+          "pass_id": "ISS(WideFOV)-20260921T0132",
+          "satellite": "ISS (Wide FOV)",
+          "start_utc": "2026-09-21T01:32:46Z",
+          "peak_utc": "2026-09-21T01:34:41Z",
+          "end_utc": "2026-09-21T01:36:36Z",
+          "max_elevation_deg": 14.3,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.06
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "LANDSAT9-20260921T0137",
+          "satellite": "LANDSAT 9",
+          "start_utc": "2026-09-21T01:37:00Z",
+          "peak_utc": "2026-09-21T01:37:53Z",
+          "end_utc": "2026-09-21T01:38:46Z",
+          "max_elevation_deg": 10.5,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.05
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "Sentinel-2A-20260921T0215",
+          "satellite": "Sentinel-2A",
+          "start_utc": "2026-09-21T02:15:43Z",
+          "peak_utc": "2026-09-21T02:19:33Z",
+          "end_utc": "2026-09-21T02:23:25Z",
+          "max_elevation_deg": 21.5,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.1
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "ISS(WideFOV)-20260921T0308",
+          "satellite": "ISS (Wide FOV)",
+          "start_utc": "2026-09-21T03:08:34Z",
+          "peak_utc": "2026-09-21T03:11:56Z",
+          "end_utc": "2026-09-21T03:15:16Z",
+          "max_elevation_deg": 82.8,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.37
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "LANDSAT9-20260921T0310",
+          "satellite": "LANDSAT 9",
+          "start_utc": "2026-09-21T03:10:11Z",
+          "peak_utc": "2026-09-21T03:14:55Z",
+          "end_utc": "2026-09-21T03:19:42Z",
+          "max_elevation_deg": 78.3,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.35
+          },
+          "verdict": "bad"
+        },
+        {
+          "pass_id": "Sentinel-2A-20260921T0353",
+          "satellite": "Sentinel-2A",
+          "start_utc": "2026-09-21T03:53:47Z",
+          "peak_utc": "2026-09-21T03:58:41Z",
+          "end_utc": "2026-09-21T04:03:37Z",
+          "max_elevation_deg": 42.6,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.19
+          },
+          "verdict": "bad"
         }
       ]
     }
