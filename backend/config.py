@@ -84,6 +84,9 @@ DAYLIGHT_FULL_DEG = 5.0
 # Open-Meteo (free, no API key)
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
+LIVE_WEATHER_TIMEOUT_S = 6  # past this, /api/calculate falls back to climatology
+LIVE_WEATHER_TTL_S = 30 * 60  # reuse a point's forecast for 30 min
+LIVE_WEATHER_ROUND = 2  # decimal places, ~1 km: nearby clicks share a forecast
 TRAIN_START = "2023-09-01"
 TRAIN_END = "2026-09-01"
 

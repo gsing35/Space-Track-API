@@ -106,47 +106,72 @@ Swap `GP_CATALOG_QUERY` in the script, or pass a different query to
 
 ## Pass prediction backend
 
-`backend/` computes upcoming satellite passes over a ground target and predicts which
-ones will actually yield a usable image.
+`backend/` answers one question for any point on Earth: **over the next 72 hours, which
+Earth-observation satellite passes will actually produce a usable image of this spot?**
 
 ```bash
-.venv/bin/python -m backend.train_model      # once: fit the model
-.venv/bin/python -m backend.generate         # writes data/passes.json
+.venv/bin/python -m backend.train_model     # fit the model (offline after first run)
+.venv/bin/python -m backend.generate        # static Blacksburg -> data/passes.json
 .venv/bin/uvicorn backend.main:app --port 8000
 ```
 
-Re-run `generate` immediately before a demo: `lead_time_hours` is measured from
-generation time and is the one output field that silently goes stale.
+| Endpoint | What it does | Speed |
+| --- | --- | --- |
+| `GET /api/passes` | Precomputed Blacksburg file, for instant page load | ~5 ms |
+| `GET /api/calculate?lat=&lon=&name=` | Live computation for any point on the globe | ~2 s new point, ~0.2 s repeat |
+| `GET /api/health` | Liveness, file age, pass count | |
 
-### How a pass is scored
+A pass counts only if it is **above 20°**, the satellite's **sensor swath covers the point**,
+and it happens in **daylight** — optical sensors need reflected sunlight. Each pass then gets
+three comparable probabilities of a usable image (observed cloud cover below 30%):
 
-Each pass carries three directly comparable probabilities of yielding a usable image:
-
-| Score | What it knows |
+| Score | Meaning |
 | --- | --- |
-| `climatology` | Historical base rate of clear sky for that month and hour |
-| `forecast_only` | Naive trust in the cloud forecast: `1 - cloud/100` |
-| `model` | Trained classifier, gated by available daylight |
+| `forecast_only` | Naive: `1 - forecast cloud %` |
+| `climatology` | This location's historical clear-sky rate for the month |
+| `model` | Trained model, zeroed in darkness |
 
-`model` is a `LogisticRegression` trained on ~26,000 real hourly cloud observations for
-the target from Open-Meteo's free archive (91% test accuracy against a 63% majority-class
-baseline). The two baselines are deliberately left naive — the gap between them and the
-model is the point.
+Re-run `generate` right before a demo: `lead_time_hours` is measured from generation time.
 
-### Two documented simplifications
+### How the model was trained and tested
 
-**Synthetic forecast during training.** Free *historical forecasts* don't exist, only
-historical observations. The forecast feature used in training is therefore derived from
-the observation by adding noise whose spread grows with lead time. This is what teaches
-the model that a forecast 60 hours out deserves less trust than one 6 hours out, and is
-why `model` and `forecast_only` diverge at long lead times.
+One global model, not a grid of regional ones. The live Open-Meteo forecast is already
+specific to the clicked point; what the model learns is how far to trust that forecast.
 
-**All satellites treated as daylight-only.** Optical sensors need reflected sunlight, so
-a pass in darkness scores zero however clear the sky is — roughly half of all geometric
-passes. Sun elevation uses the NOAA approximation rather than Skyfield's `de421.bsp`, to
-keep the demo path free of any network fetch. MODIS on Terra and Aqua does have thermal
-bands that work at night; that capability is intentionally not modelled here, since the
-project's premise is cloud ruining *optical* imagery.
+- **Data:** real cloud forecasts issued 0–3 days ahead (Open-Meteo Previous Runs API),
+  paired with what was actually observed (ERA5 reanalysis), Sep 2025 – Aug 2026.
+- **Training:** 520,396 daylight hours from 27 locations on every continent and ocean.
+- **Testing:** 8 locations **never seen in training** — Blacksburg, Anchorage, Honolulu,
+  Santiago, Johannesburg, Istanbul, Delhi, Sydney — chosen far from any training site.
+
+Results on the unseen locations (128,880 daylight hours; Brier score, lower is better):
+
+| Method | Brier | Log loss | Accuracy |
+| --- | --- | --- | --- |
+| **model** | **0.1245** | **0.399** | 82.7% |
+| forecast_only (raw forecast) | 0.1480 | 0.637 | 79.4% |
+| climatology | 0.2092 | 0.609 | 69.3% |
+| "forecast < 30% = clear" rule | — | — | 82.8% |
+
+What those numbers do and don't say:
+
+- The model's probabilities are **16% better (Brier) than trusting the raw forecast**, and
+  better at 7 of the 8 unseen locations. Istanbul is the exception.
+- Its **yes/no accuracy is no better than the simple rule** "forecast under 30% means clear."
+  The value is calibration. When the model says 50–60% it is clear 60% of the time, and
+  60–70% means 70%; it is slightly cautious at the top (70–80% is actually clear 84% of
+  the time). The raw forecast's 60–70% is clear only 36% of the time.
+- **Brier Skill Score vs climatology:** model +0.405, raw forecast +0.292, persistence
+  ("same as N days ago") −0.660.
+- **Passes it calls good (score ≥ 0.70) are clear 90.5% of the time**, versus 79.7% for the
+  raw forecast — half the false "good" calls, at the cost of flagging fewer passes.
+- The shipped model scores exactly the same as the forecast calibrated per lead time
+  (Brier Skill Score +0.405 for both): it is a calibration layer, not a better cloud predictor.
+- **Adding location features did not help.** Local time, season, latitude and climatology
+  were all tried; on unseen locations each made Brier equal or worse. With 27 training
+  sites they learn site quirks that don't transfer, so the shipped model uses only the
+  forecast and its lead time. Full table in `data/model_report.json`.
+- "Observed" is ERA5 reanalysis — itself a model, not satellite cloud masks.
 
 ## Data source & attribution
 

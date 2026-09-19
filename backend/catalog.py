@@ -1,8 +1,9 @@
 """Pull the handful of Earth-observation satellites we care about out of the
 35 MB GP catalog.
 
-This runs OFFLINE, as part of generate.py. The API process never touches the
-big catalog file -- see load_targets().
+Reads the local snapshot only -- never the live Space-Track API.
+generate.py uses extract_targets() offline; the API process calls
+load_catalog_records() + select_targets() once at startup.
 """
 
 import json
@@ -11,21 +12,23 @@ import sys
 from . import config
 
 
-def extract_targets(catalog_path=None, names=None, out_path=None):
-    """Read the full catalog once and write a small targets file.
-
-    Matches on EXACT OBJECT_NAME. Substring matching is unsafe here: "TERRA"
-    also matches SKYTERRA 1 and TERRA SAR X, and "AQUA" also matches
-    SAC-D (AQUARIUS). Raises if any requested satellite is missing, rather
-    than silently computing passes for a short list.
-    """
+def load_catalog_records(catalog_path=None):
+    """Parse the full GP catalog from disk and return its record list."""
     catalog_path = catalog_path or config.CATALOG_PATH
-    names = names or config.SATELLITE_NAMES
-    out_path = out_path or config.TARGETS_PATH
-
     with open(catalog_path) as fh:
         catalog = json.load(fh)
-    records = catalog["records"] if isinstance(catalog, dict) else catalog
+    return catalog["records"] if isinstance(catalog, dict) else catalog
+
+
+def select_targets(records, names=None):
+    """Pick the configured satellites out of parsed catalog records.
+
+    Pure: no file I/O. Matches on EXACT OBJECT_NAME. Substring matching is
+    unsafe here: "TERRA" also matches SKYTERRA 1 and TERRA SAR X, and "AQUA"
+    also matches SAC-D (AQUARIUS). Raises if any requested satellite is
+    missing, rather than silently computing passes for a short list.
+    """
+    names = names or config.SATELLITE_NAMES
 
     wanted = set(names)
     found = {}
@@ -58,6 +61,13 @@ def extract_targets(catalog_path=None, names=None, out_path=None):
                 "epoch": rec.get("EPOCH"),
             }
         )
+    return targets
+
+
+def extract_targets(catalog_path=None, names=None, out_path=None):
+    """Read the full catalog once and write a small targets file."""
+    out_path = out_path or config.TARGETS_PATH
+    targets = select_targets(load_catalog_records(catalog_path), names)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w") as fh:

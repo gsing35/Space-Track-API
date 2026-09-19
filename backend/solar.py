@@ -10,12 +10,43 @@ deg vs 90 - lat + declination = 54.05 deg (error 0.000), peak at 17:16 UTC
 against a solar noon of 17:21 UTC.
 """
 
-import math
 from datetime import datetime, timezone
+
+import numpy as np
 
 from . import config
 
 _J2000 = datetime(2000, 1, 1, 12, tzinfo=timezone.utc)
+_J2000_EPOCH_S = _J2000.timestamp()
+
+
+def sun_elevation_deg_array(epoch_s, lat, lon):
+    """Vectorized solar elevation in degrees for Unix-epoch seconds.
+
+    The single implementation of the algorithm: training uses it over a
+    million rows, and sun_elevation_deg() wraps it for one pass at a time.
+    """
+    d = (np.asarray(epoch_s, dtype=float) - _J2000_EPOCH_S) / 86400.0
+
+    mean_anomaly = np.radians((357.529 + 0.98560028 * d) % 360)
+    mean_long = (280.459 + 0.98564736 * d) % 360
+    ecliptic_long = np.radians(
+        (mean_long + 1.915 * np.sin(mean_anomaly) + 0.020 * np.sin(2 * mean_anomaly))
+        % 360
+    )
+    obliquity = np.radians(23.439 - 0.00000036 * d)
+
+    declination = np.arcsin(np.sin(obliquity) * np.sin(ecliptic_long))
+    right_asc = np.arctan2(np.cos(obliquity) * np.sin(ecliptic_long), np.cos(ecliptic_long))
+
+    gmst = (18.697374558 + 24.06570982441908 * d) % 24
+    hour_angle = np.radians((gmst * 15 + np.asarray(lon) - np.degrees(right_asc)) % 360)
+
+    lat_rad = np.radians(np.asarray(lat, dtype=float))
+    sin_elev = np.sin(lat_rad) * np.sin(declination) + np.cos(lat_rad) * np.cos(
+        declination
+    ) * np.cos(hour_angle)
+    return np.degrees(np.arcsin(np.clip(sin_elev, -1.0, 1.0)))
 
 
 def sun_elevation_deg(when, lat=None, lon=None):
@@ -24,30 +55,7 @@ def sun_elevation_deg(when, lat=None, lon=None):
     lon = config.TARGET_LON if lon is None else lon
     if when.tzinfo is None:
         when = when.replace(tzinfo=timezone.utc)
-
-    d = (when - _J2000).total_seconds() / 86400.0
-
-    mean_anomaly = math.radians((357.529 + 0.98560028 * d) % 360)
-    mean_long = (280.459 + 0.98564736 * d) % 360
-    ecliptic_long = math.radians(
-        (mean_long + 1.915 * math.sin(mean_anomaly) + 0.020 * math.sin(2 * mean_anomaly))
-        % 360
-    )
-    obliquity = math.radians(23.439 - 0.00000036 * d)
-
-    declination = math.asin(math.sin(obliquity) * math.sin(ecliptic_long))
-    right_asc = math.atan2(
-        math.cos(obliquity) * math.sin(ecliptic_long), math.cos(ecliptic_long)
-    )
-
-    gmst = (18.697374558 + 24.06570982441908 * d) % 24
-    hour_angle = math.radians((gmst * 15 + lon - math.degrees(right_asc)) % 360)
-
-    lat_rad = math.radians(lat)
-    sin_elev = math.sin(lat_rad) * math.sin(declination) + math.cos(lat_rad) * math.cos(
-        declination
-    ) * math.cos(hour_angle)
-    return math.degrees(math.asin(max(-1.0, min(1.0, sin_elev))))
+    return float(sun_elevation_deg_array(when.timestamp(), lat, lon))
 
 
 def daylight_factor(elevation_deg):

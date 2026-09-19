@@ -1,0 +1,351 @@
+{
+  "trained_at": "2026-09-19T18:49:17Z",
+  "label_period": [
+    "2025-09-01",
+    "2026-08-31"
+  ],
+  "usable_definition": "observed cloud cover < 30%",
+  "train_locations": [
+    "Seattle",
+    "Phoenix",
+    "Denver",
+    "Miami",
+    "Chicago",
+    "Mexico City",
+    "Bogota",
+    "Manaus",
+    "Lima",
+    "Buenos Aires",
+    "London",
+    "Madrid",
+    "Reykjavik",
+    "Tromso",
+    "Moscow",
+    "Cairo",
+    "Lagos",
+    "Nairobi",
+    "Cape Town",
+    "Riyadh",
+    "Mumbai",
+    "Singapore",
+    "Beijing",
+    "Tokyo",
+    "Perth",
+    "Auckland",
+    "Mid-Atlantic"
+  ],
+  "holdout_locations": [
+    "Blacksburg",
+    "Anchorage",
+    "Honolulu",
+    "Santiago",
+    "Johannesburg",
+    "Istanbul",
+    "Delhi",
+    "Sydney"
+  ],
+  "holdout_rows": 128880,
+  "holdout_clear_rate": 0.417,
+  "overall": {
+    "model": {
+      "brier": 0.1245,
+      "log_loss": 0.399,
+      "accuracy": 0.8272,
+      "auc": 0.8975
+    },
+    "forecast_only": {
+      "brier": 0.148,
+      "log_loss": 0.6366,
+      "accuracy": 0.7936,
+      "auc": 0.8843
+    },
+    "climatology": {
+      "brier": 0.2092,
+      "log_loss": 0.6091,
+      "accuracy": 0.6928,
+      "auc": 0.7145
+    }
+  },
+  "forecast_threshold_accuracy": 0.8279,
+  "shipped_feature_set": "forecast+lead",
+  "feature_set_ablation": {
+    "forecast+lead": {
+      "brier": 0.1245,
+      "log_loss": 0.399,
+      "accuracy": 0.8272,
+      "auc": 0.8975
+    },
+    "+time+season": {
+      "brier": 0.1339,
+      "log_loss": 0.4248,
+      "accuracy": 0.8149,
+      "auc": 0.8837
+    },
+    "+abs_lat": {
+      "brier": 0.1293,
+      "log_loss": 0.4091,
+      "accuracy": 0.8199,
+      "auc": 0.8919
+    },
+    "+climatology": {
+      "brier": 0.1254,
+      "log_loss": 0.397,
+      "accuracy": 0.8248,
+      "auc": 0.898
+    },
+    "forecast+lead+climatology": {
+      "brier": 0.1253,
+      "log_loss": 0.399,
+      "accuracy": 0.828,
+      "auc": 0.8968
+    }
+  },
+  "by_lead_day": {
+    "0": {
+      "model": {
+        "brier": 0.0619,
+        "log_loss": 0.2348,
+        "accuracy": 0.9342,
+        "auc": 0.9594
+      },
+      "forecast_only": {
+        "brier": 0.0939,
+        "log_loss": 0.3597,
+        "accuracy": 0.8582,
+        "auc": 0.9575
+      },
+      "climatology": {
+        "brier": 0.2092,
+        "log_loss": 0.6091,
+        "accuracy": 0.6928,
+        "auc": 0.7145
+      },
+      "forecast_threshold_accuracy": 0.9342
+    },
+    "1": {
+      "model": {
+        "brier": 0.1346,
+        "log_loss": 0.4252,
+        "accuracy": 0.8056,
+        "auc": 0.8814
+      },
+      "forecast_only": {
+        "brier": 0.1528,
+        "log_loss": 0.6339,
+        "accuracy": 0.7862,
+        "auc": 0.881
+      },
+      "climatology": {
+        "brier": 0.2092,
+        "log_loss": 0.6091,
+        "accuracy": 0.6928,
+        "auc": 0.7145
+      },
+      "forecast_threshold_accuracy": 0.8096
+    },
+    "2": {
+      "model": {
+        "brier": 0.1438,
+        "log_loss": 0.4502,
+        "accuracy": 0.7949,
+        "auc": 0.8639
+      },
+      "forecast_only": {
+        "brier": 0.163,
+        "log_loss": 0.7121,
+        "accuracy": 0.7763,
+        "auc": 0.8641
+      },
+      "climatology": {
+        "brier": 0.2092,
+        "log_loss": 0.6091,
+        "accuracy": 0.6928,
+        "auc": 0.7145
+      },
+      "forecast_threshold_accuracy": 0.7953
+    },
+    "3": {
+      "model": {
+        "brier": 0.1576,
+        "log_loss": 0.4859,
+        "accuracy": 0.7739,
+        "auc": 0.8375
+      },
+      "forecast_only": {
+        "brier": 0.1824,
+        "log_loss": 0.8408,
+        "accuracy": 0.7535,
+        "auc": 0.8373
+      },
+      "climatology": {
+        "brier": 0.2092,
+        "log_loss": 0.6091,
+        "accuracy": 0.6928,
+        "auc": 0.7145
+      },
+      "forecast_threshold_accuracy": 0.7725
+    }
+  },
+  "by_location": {
+    "Blacksburg": {
+      "model": {
+        "brier": 0.1797,
+        "log_loss": 0.5494,
+        "accuracy": 0.7488,
+        "auc": 0.789
+      },
+      "forecast_only": {
+        "brier": 0.2277,
+        "log_loss": 1.2593,
+        "accuracy": 0.7224,
+        "auc": 0.7834
+      },
+      "climatology": {
+        "brier": 0.2218,
+        "log_loss": 0.6355,
+        "accuracy": 0.6762,
+        "auc": 0.5463
+      }
+    },
+    "Anchorage": {
+      "model": {
+        "brier": 0.071,
+        "log_loss": 0.2557,
+        "accuracy": 0.9126,
+        "auc": 0.9394
+      },
+      "forecast_only": {
+        "brier": 0.0929,
+        "log_loss": 0.3502,
+        "accuracy": 0.8695,
+        "auc": 0.9246
+      },
+      "climatology": {
+        "brier": 0.1547,
+        "log_loss": 0.489,
+        "accuracy": 0.8063,
+        "auc": 0.5624
+      }
+    },
+    "Honolulu": {
+      "model": {
+        "brier": 0.1316,
+        "log_loss": 0.4161,
+        "accuracy": 0.8211,
+        "auc": 0.84
+      },
+      "forecast_only": {
+        "brier": 0.1943,
+        "log_loss": 0.6225,
+        "accuracy": 0.6826,
+        "auc": 0.8068
+      },
+      "climatology": {
+        "brier": 0.2088,
+        "log_loss": 0.6087,
+        "accuracy": 0.7413,
+        "auc": 0.5351
+      }
+    },
+    "Santiago": {
+      "model": {
+        "brier": 0.0813,
+        "log_loss": 0.2925,
+        "accuracy": 0.9007,
+        "auc": 0.951
+      },
+      "forecast_only": {
+        "brier": 0.0896,
+        "log_loss": 0.434,
+        "accuracy": 0.8835,
+        "auc": 0.9387
+      },
+      "climatology": {
+        "brier": 0.2045,
+        "log_loss": 0.596,
+        "accuracy": 0.7019,
+        "auc": 0.7149
+      }
+    },
+    "Johannesburg": {
+      "model": {
+        "brier": 0.1217,
+        "log_loss": 0.3928,
+        "accuracy": 0.8278,
+        "auc": 0.9069
+      },
+      "forecast_only": {
+        "brier": 0.1493,
+        "log_loss": 0.6442,
+        "accuracy": 0.7846,
+        "auc": 0.8846
+      },
+      "climatology": {
+        "brier": 0.2371,
+        "log_loss": 0.6777,
+        "accuracy": 0.6193,
+        "auc": 0.7017
+      }
+    },
+    "Istanbul": {
+      "model": {
+        "brier": 0.1741,
+        "log_loss": 0.5207,
+        "accuracy": 0.7306,
+        "auc": 0.8566
+      },
+      "forecast_only": {
+        "brier": 0.1505,
+        "log_loss": 0.5981,
+        "accuracy": 0.7954,
+        "auc": 0.8674
+      },
+      "climatology": {
+        "brier": 0.1958,
+        "log_loss": 0.5791,
+        "accuracy": 0.7119,
+        "auc": 0.7575
+      }
+    },
+    "Delhi": {
+      "model": {
+        "brier": 0.1231,
+        "log_loss": 0.3952,
+        "accuracy": 0.8262,
+        "auc": 0.9057
+      },
+      "forecast_only": {
+        "brier": 0.1449,
+        "log_loss": 0.6656,
+        "accuracy": 0.8064,
+        "auc": 0.8833
+      },
+      "climatology": {
+        "brier": 0.1991,
+        "log_loss": 0.5871,
+        "accuracy": 0.7132,
+        "auc": 0.717
+      }
+    },
+    "Sydney": {
+      "model": {
+        "brier": 0.1086,
+        "log_loss": 0.3581,
+        "accuracy": 0.8564,
+        "auc": 0.9274
+      },
+      "forecast_only": {
+        "brier": 0.1299,
+        "log_loss": 0.4925,
+        "accuracy": 0.8114,
+        "auc": 0.9112
+      },
+      "climatology": {
+        "brier": 0.2472,
+        "log_loss": 0.6899,
+        "accuracy": 0.5809,
+        "auc": 0.5544
+      }
+    }
+  }
+}
