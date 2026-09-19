@@ -2,3 +2,6 @@
 gp_catalog.json.tmp
 __pycache__/
 *.pyc
+config.js
+config.json
+.venv/

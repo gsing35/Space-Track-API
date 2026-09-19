@@ -104,10 +104,57 @@ Swap `GP_CATALOG_QUERY` in the script, or pass a different query to
 | Raw 3LE instead of JSON | `...format/3le` (returns text, not JSON) |
 | Latest-only, faster | use `class/gp` (already latest); `gp_history` for past elsets |
 
+## Pass prediction backend
+
+`backend/` computes upcoming satellite passes over a ground target and predicts which
+ones will actually yield a usable image.
+
+```bash
+.venv/bin/python -m backend.train_model      # once: fit the model
+.venv/bin/python -m backend.generate         # writes data/passes.json
+.venv/bin/uvicorn backend.main:app --port 8000
+```
+
+Re-run `generate` immediately before a demo: `lead_time_hours` is measured from
+generation time and is the one output field that silently goes stale.
+
+### How a pass is scored
+
+Each pass carries three directly comparable probabilities of yielding a usable image:
+
+| Score | What it knows |
+| --- | --- |
+| `climatology` | Historical base rate of clear sky for that month and hour |
+| `forecast_only` | Naive trust in the cloud forecast: `1 - cloud/100` |
+| `model` | Trained classifier, gated by available daylight |
+
+`model` is a `LogisticRegression` trained on ~26,000 real hourly cloud observations for
+the target from Open-Meteo's free archive (91% test accuracy against a 63% majority-class
+baseline). The two baselines are deliberately left naive — the gap between them and the
+model is the point.
+
+### Two documented simplifications
+
+**Synthetic forecast during training.** Free *historical forecasts* don't exist, only
+historical observations. The forecast feature used in training is therefore derived from
+the observation by adding noise whose spread grows with lead time. This is what teaches
+the model that a forecast 60 hours out deserves less trust than one 6 hours out, and is
+why `model` and `forecast_only` diverge at long lead times.
+
+**All satellites treated as daylight-only.** Optical sensors need reflected sunlight, so
+a pass in darkness scores zero however clear the sky is — roughly half of all geometric
+passes. Sun elevation uses the NOAA approximation rather than Skyfield's `de421.bsp`, to
+keep the demo path free of any network fetch. MODIS on Terra and Aqua does have thermal
+bands that work at night; that capability is intentionally not modelled here, since the
+project's premise is cloud ruining *optical* imagery.
+
 ## Data source & attribution
 
 Orbital data in this repository comes from [Space-Track.org](https://www.space-track.org),
 provided by United States Space Command (USSPACECOM) and the 18th Space Defense Squadron.
+
+Cloud forecasts and the historical archive used for training come from
+[Open-Meteo](https://open-meteo.com), free for non-commercial use under CC BY 4.0.
 
 `gp_catalog.json` and `sats.tle` are committed here as a point-in-time snapshot.
 Redistribution is permitted under USSPACECOM's standing grant:
