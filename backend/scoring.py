@@ -49,8 +49,8 @@ def forecast_only_score(forecast_cloud_pct):
     return round(1.0 - forecast_cloud_pct / 100.0, 4)
 
 
-def model_score(forecast_cloud_pct, lead_hours, when, lat, lon, clim=None, forecast_available=True):
-    """P(usable image): clear-sky probability gated by available daylight.
+def clear_probability(forecast_cloud_pct, lead_hours, when, lat, lon, clim=None, forecast_available=True):
+    """P(clear sky at the target), before any daylight adjustment.
 
     With no real forecast for the hour, the honest answer is the location's
     climatology -- feeding a climatology-derived number through the forecast
@@ -58,27 +58,45 @@ def model_score(forecast_cloud_pct, lead_hours, when, lat, lon, clim=None, forec
     """
     _ensure_loaded()
     if not forecast_available:
-        clear = climatology_score(clim)
-    elif _bundle is None:
+        return climatology_score(clim)
+    if _bundle is None:
         # Fallback blend: trust the forecast less as lead time grows.
         trust = max(0.0, 1.0 - lead_hours / float(config.HORIZON_HOURS))
         fo = forecast_only_score(forecast_cloud_pct)
-        clear = trust * fo + (1.0 - trust) * climatology_score(clim)
-    else:
-        X = features.build(
-            forecast_cloud_pct,
-            features.lead_day(lead_hours),
-            when.timestamp(),
-            lat,
-            lon,
-            math.nan if clim is None else clim,
-        )[:, _bundle["columns"]]
-        clear = float(_bundle["model"].predict_proba(X)[0][1])
+        return trust * fo + (1.0 - trust) * climatology_score(clim)
+    X = features.build(
+        forecast_cloud_pct,
+        features.lead_day(lead_hours),
+        when.timestamp(),
+        lat,
+        lon,
+        math.nan if clim is None else clim,
+    )[:, _bundle["columns"]]
+    return float(_bundle["model"].predict_proba(X)[0][1])
 
+
+def model_score(forecast_cloud_pct, lead_hours, when, lat, lon, clim=None, forecast_available=True):
+    """P(usable image): clear-sky probability gated by available daylight."""
+    clear = clear_probability(
+        forecast_cloud_pct, lead_hours, when, lat, lon, clim, forecast_available
+    )
     # Applied to both paths, or the night-pass bug returns whenever the
     # pickled model is missing.
     daylight = solar.daylight_factor(solar.sun_elevation_deg(when, lat, lon))
     return round(clear * daylight, 4)
+
+
+def limited_by(clear, daylight, max_elevation_deg):
+    """The main thing standing between this pass and a good image, or None."""
+    if daylight <= 0.0:
+        return "night"
+    if clear < config.VERDICT_MARGINAL:
+        return "clouds"
+    if clear * daylight < config.VERDICT_GOOD:
+        return "light" if daylight < 1.0 else "clouds"
+    if max_elevation_deg < config.GOOD_ELEV_DEG:
+        return "geometry"
+    return None
 
 
 def verdict_for(score, max_elevation_deg):
@@ -98,10 +116,12 @@ def score_pass(
     forecast_cloud_pct, lead_hours, when, max_elevation_deg, lat, lon, clim=None,
     forecast_available=True,
 ):
-    """All three scores plus the verdict for one pass."""
-    model = model_score(
+    """All three scores, the verdict, and what limits the pass."""
+    clear = clear_probability(
         forecast_cloud_pct, lead_hours, when, lat, lon, clim, forecast_available
     )
+    daylight = solar.daylight_factor(solar.sun_elevation_deg(when, lat, lon))
+    model = round(clear * daylight, 4)
     return {
         "scores": {
             "model": model,
@@ -109,6 +129,7 @@ def score_pass(
             "climatology": round(climatology_score(clim), 4),
         },
         "verdict": verdict_for(model, max_elevation_deg),
+        "limited_by": limited_by(clear, daylight, max_elevation_deg),
     }
 
 

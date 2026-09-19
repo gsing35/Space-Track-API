@@ -17,7 +17,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
-from . import catalog, config, passes, scoring, solar, weather
+from . import acquisition, catalog, config, passes, scoring, solar, weather
 
 
 def _pass_id(target_id, norad_id, start_dt):
@@ -84,6 +84,8 @@ def build_document(lat, lon, target_name, target_id, targets, clouds, now=None):
                 "cloud_forecast_pct": int(cloud),
                 "scores": scored["scores"],
                 "verdict": scored["verdict"],
+                "limited_by": scored["limited_by"],
+                "imaging": config.SATELLITE_META[p["satellite"]]["imaging"],
             }
         )
 
@@ -112,6 +114,7 @@ def build_document(lat, lon, target_name, target_id, targets, clouds, now=None):
                 "lat": float(lat),
                 "lon": float(lon),
                 "passes": out_passes,
+                "acquisition": acquisition.plan(out_passes, now),
             }
         ],
     }
@@ -123,7 +126,9 @@ def build_document(lat, lon, target_name, target_id, targets, clouds, now=None):
     return doc, stats
 
 
-def compute_passes_for_target(lat, lon, target_name=None, *, targets=None, now=None, stats=None):
+def compute_passes_for_target(
+    lat, lon, target_name=None, *, target_id=None, targets=None, now=None, stats=None
+):
     """Live computation for an arbitrary point. Same schema as passes.json.
 
     `targets` is the in-memory satellite list the API selects once at
@@ -152,7 +157,7 @@ def compute_passes_for_target(lat, lon, target_name=None, *, targets=None, now=N
     clouds = weather.CloudLookup(forecast) if forecast else None
 
     doc, run_stats = build_document(
-        lat, lon, target_name, _slug(target_name), targets, clouds, now=now
+        lat, lon, target_name, target_id or _slug(target_name), targets, clouds, now=now
     )
     if stats is not None:
         stats.update(run_stats)
@@ -207,6 +212,12 @@ def main():
     print(f"  scoring:    {scoring.status()}")
     print(f"  climatology: {stats['climatology']}")
     print(f"  verdicts:   {counts}")
+    acq = doc["targets"][0]["acquisition"]
+    print(
+        f"  time-to-image: {acq['recommended_pass_id']} in {acq['hours_to_recommended']} h"
+        f" ({acq['recommended_reason']}); P(image) 24h {acq['p_image_24h']:.0%},"
+        f" 48h {acq['p_image_48h']:.0%}, 72h {acq['p_image_horizon']:.0%}"
+    )
     if stats["missing_cloud"]:
         print(
             f"  note: {stats['missing_cloud']} pass(es) beyond forecast range,"

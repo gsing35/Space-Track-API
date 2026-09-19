@@ -117,7 +117,7 @@ Earth-observation satellite passes will actually produce a usable image of this 
 
 | Endpoint | What it does | Speed |
 | --- | --- | --- |
-| `GET /api/passes` | Precomputed Blacksburg file, for instant page load | ~5 ms |
+| `GET /api/passes` | Precomputed Blacksburg file, for instant page load; recomputed in memory once over an hour old | ~5 ms |
 | `GET /api/calculate?lat=&lon=&name=` | Live computation for any point on the globe | ~2 s new point, ~0.2 s repeat |
 | `GET /api/health` | Liveness, file age, pass count | |
 
@@ -131,7 +131,30 @@ three comparable probabilities of a usable image (observed cloud cover below 30%
 | `climatology` | This location's historical clear-sky rate for the month |
 | `model` | Trained model, zeroed in darkness |
 
-Re-run `generate` right before a demo: `lead_time_hours` is measured from generation time.
+`lead_time_hours` is measured from generation time, so `/api/passes` quietly recomputes once
+the file is over an hour old (in memory only; if that fails it serves the file).
+
+### Optimizing for time-to-image
+
+What an operator needs is **how soon they can get a usable image**, not a score for each pass.
+Every target in the response carries an `acquisition` block that answers exactly that:
+
+| Field | Meaning |
+| --- | --- |
+| `recommended_pass_id` | The **earliest** pass rated `good`; if none, the earliest pass within 5 points of the best score |
+| `hours_to_recommended` | Wait until that pass peaks |
+| `p_image_24h` / `p_image_48h` / `p_image_horizon` | Probability of at least one usable image by then |
+| `median_hours_to_image` | When that probability first reaches 50% (`null` if never within 72 h) |
+| `cumulative` | The curve behind those numbers, one point per weather window |
+
+Each pass also gets `limited_by` (`night`, `clouds`, `light`, `geometry`, or `null` when
+nothing is limiting it) and `imaging` (`false` for the ISS, which is excluded from the numbers above).
+
+Passes close together see the same clouds, so they are not separate chances. Imaging passes
+peaking within **3 hours** of each other form one weather window, which succeeds with its best
+pass's probability. Windows are then treated as independent, so `p_image_*` is somewhat
+optimistic when cloud patterns persist for days. `recommended_pass_id` and
+`hours_to_recommended` do not depend on that assumption.
 
 ### How the model was trained and tested
 

@@ -76,6 +76,26 @@
     .pass-row:hover td { border-color: rgba(0, 229, 255, 0.3); }
 
     .sat-tag { padding: 3px 6px; border-radius: 3px; font-weight: bold; font-size: 10px; color: #000; text-transform: uppercase; }
+    /* Time-to-image panel */
+    #acq { background: rgba(0, 255, 102, 0.06); border: 1px solid rgba(0, 255, 102, 0.35); border-radius: 6px; padding: 12px; margin-bottom: 14px; }
+    #acq.none { background: rgba(255, 0, 60, 0.06); border-color: rgba(255, 0, 60, 0.35); }
+    .acq-label { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #829ab1; text-transform: uppercase; }
+    .acq-head { font-size: 20px; font-weight: 700; color: #fff; margin: 2px 0 8px 0; }
+    .acq-head .eta { color: #00ff66; text-shadow: 0 0 8px rgba(0, 255, 102, 0.5); }
+    #acq.none .acq-head { color: #ff6b8b; }
+    .acq-stats { display: flex; gap: 6px; font-family: 'Share Tech Mono', monospace; }
+    .acq-stat { flex: 1; background: rgba(16, 32, 56, 0.6); border-radius: 4px; padding: 5px 4px; text-align: center; }
+    .acq-stat b { display: block; color: #fff; font-size: 15px; }
+    .acq-stat span { font-size: 10px; color: #829ab1; }
+    .btn-jump { margin-top: 10px; width: 100%; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1px;
+      color: #02060f; background: #00ff66; border: none; border-radius: 4px; padding: 6px; text-transform: uppercase; }
+    .btn-jump:hover { box-shadow: 0 0 12px rgba(0, 255, 102, 0.6); }
+    .pass-row.rec { background: rgba(0, 255, 102, 0.14); }
+    .pass-row.rec td { border-color: rgba(0, 255, 102, 0.6); }
+    .pass-row.night { opacity: 0.38; }
+    .lead { display: block; font-size: 10px; color: #829ab1; }
+    .tag-note { font-size: 10px; color: #829ab1; text-transform: uppercase; }
+
     .btn-view { color: #00e5ff; font-weight: bold; background: rgba(0, 229, 255, 0.1); padding: 4px 8px; border-radius: 3px; text-transform: uppercase; font-size: 10px;}
   </style>
 </head>
@@ -96,11 +116,13 @@
       <span id="target-coords">Awaiting Telemetry...</span>
     </div>
     
+    <div id="acq" style="display:none"></div>
+
     <table id="passes-table">
       <thead>
         <tr>
           <th>Asset</th>
-          <th>TCA (UTC)</th>
+          <th>Peak (UTC)</th>
           <th>Clouds</th>
           <th>Score</th>
           <th>Action</th>
@@ -127,15 +149,15 @@
     viewer.scene.globe.atmosphereLightIntensity = 15.0;
     viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
-    // Timeline Configuration (72h window)
-    const now = Cesium.JulianDate.fromDate(new Date());
-    const durationSeconds = 72 * 3600; 
-    const stopTime = Cesium.JulianDate.addSeconds(now, durationSeconds, new Cesium.JulianDate());
-    viewer.clock.startTime = now;
-    viewer.clock.stopTime = stopTime;
-    viewer.clock.currentTime = now;
-    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
-    viewer.clock.multiplier = 100;
+    // Timeline. Anchored to the contract's generated_at (not the browser clock),
+    // so every pass in the table falls inside the sampled orbit range.
+    const SAMPLE_STEP_S = 30;
+    let durationSeconds = 72 * 3600;
+    let epoch = null;          // JulianDate the orbits were sampled from
+    let satsBuiltFor = null;   // TLE signature of the satellites on the globe
+    let activeTarget = null;   // read live by the swath highlight callbacks
+    let targetEntity = null;
+    let requestSeq = 0;        // only the newest click is allowed to render
 
     function surfaceDistanceKm(lat1, lon1, lat2, lon2) {
       const R = 6371.0;
@@ -145,187 +167,263 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
-    // 2. The Reusable Rendering Engine
+    function fmtPeak(iso) {
+      const d = new Date(iso);
+      const day = d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+      return `${day} ${iso.substring(11, 16)}`;
+    }
+
+    function fmtHours(h) {
+      if (h === null || h === undefined) return '--';
+      return h < 1 ? `${Math.round(h * 60)} min` : `${h.toFixed(1)} h`;
+    }
+
+    function pct(p) { return `${Math.round(p * 100)}%`; }
+
+    function jumpTo(pass) {
+      const peak = Cesium.JulianDate.fromIso8601(pass.peak_utc);
+      viewer.clock.currentTime = Cesium.JulianDate.addSeconds(peak, -15, new Cesium.JulianDate());
+      viewer.clock.multiplier = 1.0;
+    }
+
+    // Orbits depend only on the TLEs, never on the target, so they are
+    // propagated once instead of on every click (8 sats x 8,640 samples).
+    function buildSatellites(contract) {
+      const signature = contract.satellites.map(s => s.tle1).join('|');
+      const genTime = Cesium.JulianDate.fromIso8601(contract.generated_at);
+      const drift = epoch ? Cesium.JulianDate.secondsDifference(genTime, epoch) : Infinity;
+      if (signature === satsBuiltFor && drift < 3600) return;
+
+      const t0 = performance.now();
+      viewer.entities.removeAll();
+      targetEntity = null;
+      epoch = genTime;
+      durationSeconds = (contract.horizon_hours || 72) * 3600;
+      viewer.clock.startTime = epoch.clone();
+      viewer.clock.stopTime = Cesium.JulianDate.addSeconds(epoch, durationSeconds, new Cesium.JulianDate());
+      viewer.clock.currentTime = Cesium.JulianDate.now();
+      viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+      viewer.clock.multiplier = 100;
+      viewer.timeline.zoomTo(viewer.clock.startTime, viewer.clock.stopTime);
+
+      contract.satellites.forEach(satConfig => {
+        const satrec = satellite.twoline2satrec(satConfig.tle1, satConfig.tle2);
+        const satPosProp = new Cesium.SampledPositionProperty();
+        const swathRadiusKm = satConfig.swathKm / 2.0;
+        const color = Cesium.Color.fromCssColorString(satConfig.colorHex);
+
+        for (let t = 0; t <= durationSeconds; t += SAMPLE_STEP_S) {
+          const time = Cesium.JulianDate.addSeconds(epoch, t, new Cesium.JulianDate());
+          const jsDate = Cesium.JulianDate.toDate(time);
+          const pv = satellite.propagate(satrec, jsDate);
+          if (pv.position) {
+            const geodetic = satellite.eciToGeodetic(pv.position, satellite.gstime(jsDate));
+            satPosProp.addSample(time, Cesium.Cartesian3.fromDegrees(
+              Cesium.Math.toDegrees(geodetic.longitude), Cesium.Math.toDegrees(geodetic.latitude), geodetic.height * 1000));
+          }
+        }
+
+        // force Cesium to curve the path using Lagrange polynomials instead of straight lines
+        satPosProp.setInterpolationOptions({
+          interpolationDegree: 5,
+          interpolationAlgorithm: Cesium.LagrangePolynomialApproximation
+        });
+
+        viewer.entities.add({
+          position: satPosProp,
+          orientation: new Cesium.VelocityOrientationProperty(satPosProp),
+          model: { uri: '../satellite.glb', minimumPixelSize: 64, maximumScale: 20000 },
+          point: { pixelSize: 4, color: color },
+          path: { resolution: 120, material: new Cesium.PolylineGlowMaterialProperty({ glowPower: 0.1, color: color.withAlpha(0.8) }), width: 2 }
+        });
+
+        viewer.entities.add({
+          // Project the footprint exactly onto the surface to prevent underground sinking
+          position: new Cesium.CallbackProperty((time) => {
+            const sPos = satPosProp.getValue(time);
+            if (!sPos) return undefined;
+            const carto = Cesium.Cartographic.fromCartesian(sPos);
+            return Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, 0);
+          }, false),
+          ellipse: {
+            semiMinorAxis: satConfig.swathKm * 500, semiMajorAxis: satConfig.swathKm * 500,
+            material: new Cesium.ColorMaterialProperty(new Cesium.CallbackProperty((time) => {
+              const sPos = satPosProp.getValue(time);
+              if (sPos && activeTarget) {
+                const c = Cesium.Cartographic.fromCartesian(sPos);
+                const d = surfaceDistanceKm(Cesium.Math.toDegrees(c.latitude), Cesium.Math.toDegrees(c.longitude), activeTarget.lat, activeTarget.lon);
+                if (d <= swathRadiusKm) return Cesium.Color.GOLD.withAlpha(0.6);
+              }
+              return color.withAlpha(0.15);
+            }, false)),
+            outline: true, outlineColor: color
+          }
+        });
+
+        viewer.entities.add({
+          polyline: {
+            // Dotted nadir line follows the clamped surface point
+            positions: new Cesium.CallbackProperty((time) => {
+              const sPos = satPosProp.getValue(time);
+              if (!sPos) return [];
+              const carto = Cesium.Cartographic.fromCartesian(sPos);
+              return [sPos, Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, 0)];
+            }, false),
+            width: 2,
+            material: new Cesium.PolylineDashMaterialProperty({ color: color.withAlpha(0.7), dashLength: 15.0 })
+          }
+        });
+      });
+
+      satsBuiltFor = signature;
+      console.log(`Orbits propagated in ${(performance.now() - t0).toFixed(0)} ms`);
+    }
+
+    // The headline answer: how soon is a usable image likely?
+    function renderAcquisition(target) {
+      const panel = document.getElementById('acq');
+      const acq = target.acquisition;
+      if (!acq) { panel.style.display = 'none'; return; }
+      panel.style.display = 'block';
+      const rec = (target.passes || []).find(p => p.pass_id === acq.recommended_pass_id);
+      const horizon = Math.round(durationSeconds / 3600);
+      const stats = `
+        <div class="acq-stats">
+          <div class="acq-stat"><b>${pct(acq.p_image_24h)}</b><span>&le; 24 h</span></div>
+          <div class="acq-stat"><b>${pct(acq.p_image_48h)}</b><span>&le; 48 h</span></div>
+          <div class="acq-stat"><b>${pct(acq.p_image_horizon)}</b><span>&le; ${horizon} h</span></div>
+          <div class="acq-stat"><b>${fmtHours(acq.median_hours_to_image)}</b><span>median wait</span></div>
+        </div>`;
+
+      if (!rec) {
+        panel.className = 'none';
+        panel.innerHTML = `<div class="acq-label">Time to usable image</div>
+          <div class="acq-head">No usable pass in ${horizon} h</div>${stats}`;
+        return;
+      }
+      panel.className = acq.recommended_reason === 'earliest good pass' ? '' : 'none';
+      const label = acq.recommended_reason === 'earliest good pass'
+        ? 'First likely clear image' : 'Best available (no good pass)';
+      panel.innerHTML = `<div class="acq-label">${label} &middot; P(image) by</div>
+        <div class="acq-head"></div>${stats}
+        <button class="btn-jump">Jump to pass</button>`;
+      // textContent: satellite names come from the catalog, keep them inert
+      panel.querySelector('.acq-head').innerHTML =
+        `<span class="sat"></span> &middot; ${fmtPeak(rec.peak_utc)} UTC &middot; <span class="eta">in ${fmtHours(acq.hours_to_recommended)}</span> &middot; ${pct(rec.scores.model)}`;
+      panel.querySelector('.acq-head .sat').textContent = rec.satellite;
+      panel.querySelector('.btn-jump').onclick = () => jumpTo(rec);
+    }
+
+    // The Reusable Rendering Engine
     function renderContractData(contract) {
         const tbody = document.getElementById('passes-body');
         tbody.innerHTML = "";
-        viewer.entities.removeAll(); // Clear the globe
 
         if (!contract.targets || contract.targets.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">No targets in contract</td></tr>`;
             return;
         }
 
+        buildSatellites(contract);
+
         const target = contract.targets[0];
+        activeTarget = target;
         const displayName = target.name || "Custom Target";
         document.getElementById('target-coords').innerText = `${displayName} | ${target.lat.toFixed(3)}°, ${target.lon.toFixed(3)}°`;
-        
-        // Render Glowing Target
-        viewer.entities.add({
+
+        // Swap only the target marker; the orbits stay put
+        if (targetEntity) viewer.entities.remove(targetEntity);
+        targetEntity = viewer.entities.add({
           position: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 0),
           point: { pixelSize: 8, color: Cesium.Color.WHITE, outlineColor: Cesium.Color.AQUA, outlineWidth: 3 },
-          label: { 
-            text: displayName, font: "bold 14px 'Rajdhani'", fillColor: Cesium.Color.WHITE, 
-            showBackground: true, backgroundColor: new Cesium.Color(0, 0.9, 1.0, 0.3), 
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM, pixelOffset: new Cesium.Cartesian2(0, -15) 
+          label: {
+            text: displayName, font: "bold 14px 'Rajdhani'", fillColor: Cesium.Color.WHITE,
+            showBackground: true, backgroundColor: new Cesium.Color(0, 0.9, 1.0, 0.3),
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM, pixelOffset: new Cesium.Cartesian2(0, -15)
           }
         });
 
-        // Fly Camera to New Target
-        viewer.camera.flyTo({ 
-          destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 3500000.0), 
-          duration: 1.5 
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 3500000.0),
+          duration: 1.5
         });
+
+        renderAcquisition(target);
+        const recId = target.acquisition ? target.acquisition.recommended_pass_id : null;
 
         if (!target.passes || target.passes.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">No actionable passes found in 72h window.</td></tr>`;
-        } else {
-            // Populate Dashboard Table
-            target.passes.forEach(pass => {
-              const peakTime = Cesium.JulianDate.fromIso8601(pass.peak_utc);
-              const timeStr = pass.peak_utc.substring(11, 16); 
-              
-              let verdictColor = '#f4c430'; 
-              let glowColor = 'rgba(244, 196, 48, 0.5)';
-              if (pass.verdict === 'good') {
-                  verdictColor = '#00ff66'; 
-                  glowColor = 'rgba(0, 255, 102, 0.5)';
-              } else if (pass.verdict === 'bad') {
-                  verdictColor = '#ff003c'; 
-                  glowColor = 'rgba(255, 0, 60, 0.5)';
-              }
-              
-              const scoreStr = (pass.scores.model * 100).toFixed(0);
-              const row = document.createElement('tr');
-              row.className = 'pass-row';
-              row.innerHTML = `
-                <td><span class="sat-tag" style="background:#fff">${pass.satellite.substring(0,8)}</span></td>
-                <td style="color:#fff; font-size: 14px;">${timeStr}</td>
-                <td style="color:${verdictColor}; text-shadow: 0 0 8px ${glowColor};">${pass.cloud_forecast_pct}%</td>
-                <td style="color:#fff;">${scoreStr}</td>
-                <td><span class="btn-view">Intercept</span></td>
-              `;
-              
-              row.onclick = () => { 
-                viewer.clock.currentTime = Cesium.JulianDate.addSeconds(peakTime, -15, new Cesium.JulianDate()); 
-                viewer.clock.multiplier = 1.0; 
-              };
-              tbody.appendChild(row);
-            });
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">No actionable passes found in ${Math.round(durationSeconds / 3600)}h window.</td></tr>`;
+            return;
         }
 
-        // Render Satellites & Swaths
-        contract.satellites.forEach(satConfig => {
-          const satrec = satellite.twoline2satrec(satConfig.tle1, satConfig.tle2);
-          const satPosProp = new Cesium.SampledPositionProperty();
-          const swathRadiusKm = satConfig.swathKm / 2.0;
-          
-          for (let t = 0; t <= durationSeconds; t += 30) {
-            const time = Cesium.JulianDate.addSeconds(now, t, new Cesium.JulianDate());
-            const jsDate = Cesium.JulianDate.toDate(time);
-            const pv = satellite.propagate(satrec, jsDate);
-
-            if (pv.position) {
-              const gmst = satellite.gstime(jsDate);
-              const geodetic = satellite.eciToGeodetic(pv.position, gmst);
-              const lat = Cesium.Math.toDegrees(geodetic.latitude);
-              const lon = Cesium.Math.toDegrees(geodetic.longitude);
-              const alt = geodetic.height * 1000;
-
-              satPosProp.addSample(time, Cesium.Cartesian3.fromDegrees(lon, lat, alt));
-            }
+        target.passes.forEach(pass => {
+          let verdictColor = '#f4c430';
+          let glowColor = 'rgba(244, 196, 48, 0.5)';
+          if (pass.verdict === 'good') {
+              verdictColor = '#00ff66';
+              glowColor = 'rgba(0, 255, 102, 0.5)';
+          } else if (pass.verdict === 'bad') {
+              verdictColor = '#ff003c';
+              glowColor = 'rgba(255, 0, 60, 0.5)';
           }
 
-          // force Cesium to curve the path using Lagrange polynomials instead of straight lines
-          satPosProp.setInterpolationOptions({
-              interpolationDegree: 5,
-              interpolationAlgorithm: Cesium.LagrangePolynomialApproximation
-          });
-
-          viewer.entities.add({
-            position: satPosProp,
-            orientation: new Cesium.VelocityOrientationProperty(satPosProp),
-            model: { uri: '../satellite.glb', minimumPixelSize: 64, maximumScale: 20000 },
-            point: { pixelSize: 4, color: Cesium.Color.fromCssColorString(satConfig.colorHex) },
-            path: { resolution: 120, material: new Cesium.PolylineGlowMaterialProperty({ glowPower: 0.1, color: Cesium.Color.fromCssColorString(satConfig.colorHex).withAlpha(0.8) }), width: 2 }
-          });
-
-          viewer.entities.add({
-            // FIX 2: Dynamically project the footprint exactly onto the surface to prevent underground sinking
-            position: new Cesium.CallbackProperty((time) => {
-                const sPos = satPosProp.getValue(time);
-                if (sPos) {
-                    const carto = Cesium.Cartographic.fromCartesian(sPos);
-                    return Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, 0);
-                }
-                return undefined;
-            }, false),
-            ellipse: {
-              semiMinorAxis: satConfig.swathKm * 500, semiMajorAxis: satConfig.swathKm * 500,
-              material: new Cesium.ColorMaterialProperty(new Cesium.CallbackProperty((time) => {
-                  const sPos = satPosProp.getValue(time);
-                  if(sPos) {
-                      const c = Cesium.Cartographic.fromCartesian(sPos);
-                      const d = surfaceDistanceKm(Cesium.Math.toDegrees(c.latitude), Cesium.Math.toDegrees(c.longitude), target.lat, target.lon);
-                      if(d <= swathRadiusKm) return Cesium.Color.GOLD.withAlpha(0.6); 
-                  }
-                  return Cesium.Color.fromCssColorString(satConfig.colorHex).withAlpha(0.15);
-              }, false)),
-              outline: true, outlineColor: Cesium.Color.fromCssColorString(satConfig.colorHex)
-            }
-          });
-
-          viewer.entities.add({
-            polyline: {
-              // FIX 3: Re-map the dotted nadir line to follow the clamped surface point
-              positions: new Cesium.CallbackProperty((time) => {
-                const sPos = satPosProp.getValue(time);
-                if (!sPos) return [];
-                const carto = Cesium.Cartographic.fromCartesian(sPos);
-                const gPos = Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, 0);
-                return [sPos, gPos]; 
-              }, false),
-              width: 2,
-              material: new Cesium.PolylineDashMaterialProperty({ color: Cesium.Color.fromCssColorString(satConfig.colorHex).withAlpha(0.7), dashLength: 15.0 })
-            }
-          });
+          const isNight = pass.limited_by === 'night';
+          const scoreCell = isNight
+            ? `<span class="tag-note">night</span>`
+            : `${(pass.scores.model * 100).toFixed(0)}`;
+          const row = document.createElement('tr');
+          row.className = 'pass-row' + (pass.pass_id === recId ? ' rec' : '') + (isNight ? ' night' : '');
+          row.innerHTML = `
+            <td><span class="sat-tag" style="background:#fff"></span>${pass.imaging === false ? '<span class="lead">visual</span>' : ''}</td>
+            <td style="color:#fff; font-size: 14px;">${fmtPeak(pass.peak_utc)}<span class="lead">T+${pass.lead_time_hours.toFixed(1)}h</span></td>
+            <td style="color:${verdictColor}; text-shadow: 0 0 8px ${glowColor};">${pass.cloud_forecast_pct}%</td>
+            <td style="color:#fff;">${scoreCell}</td>
+            <td><span class="btn-view">${pass.pass_id === recId ? 'Best' : 'Intercept'}</span></td>
+          `;
+          row.querySelector('.sat-tag').textContent = pass.satellite.substring(0, 8);
+          row.onclick = () => jumpTo(pass);
+          tbody.appendChild(row);
         });
     }
 
-    // 3. Initial Boot (Loads static Blacksburg passes instantly)
+    // Initial Boot (loads the Blacksburg passes instantly)
     async function bootSystem() {
+        const seq = ++requestSeq;
         try {
             const response = await fetch('http://localhost:8000/api/passes');
             const contract = await response.json();
-            renderContractData(contract);
+            if (seq === requestSeq) renderContractData(contract);
         } catch (error) {
             console.error("Boot failed:", error);
         }
     }
 
-    // 4. Interactive Map Clicking (Hits new live API)
+    // Interactive Map Clicking (hits the live API)
     viewer.screenSpaceEventHandler.setInputAction(async function(click) {
       const ray = viewer.camera.getPickRay(click.position);
       const intersection = viewer.scene.globe.pick(ray, viewer.scene);
-      
-      if (intersection) {
-        const cartographic = Cesium.Cartographic.fromCartesian(intersection);
-        const lat = Cesium.Math.toDegrees(cartographic.latitude);
-        const lon = Cesium.Math.toDegrees(cartographic.longitude);
-        
-        // UI Loading State
-        document.getElementById('target-coords').innerText = `CALCULATING OVERRIDE...`;
-        document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#00e5ff;">Predicting Clear-Sky Windows...</td></tr>`;
-        viewer.entities.removeAll();
-        
-        try {
-            const response = await fetch(`http://localhost:8000/api/calculate?lat=${lat}&lon=${lon}`);
-            const contract = await response.json();
-            renderContractData(contract);
-        } catch (error) {
-            console.error("Live calculation failed:", error);
-            document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">Tasking Failed. API Unreachable.</td></tr>`;
-        }
+      if (!intersection) return;
+
+      const cartographic = Cesium.Cartographic.fromCartesian(intersection);
+      const lat = Cesium.Math.toDegrees(cartographic.latitude);
+      const lon = Cesium.Math.toDegrees(cartographic.longitude);
+      const seq = ++requestSeq;
+
+      // UI Loading State (orbits stay on the globe)
+      document.getElementById('target-coords').innerText = `CALCULATING OVERRIDE...`;
+      document.getElementById('acq').style.display = 'none';
+      document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#00e5ff;">Predicting Clear-Sky Windows...</td></tr>`;
+
+      try {
+          const response = await fetch(`http://localhost:8000/api/calculate?lat=${lat}&lon=${lon}`);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const contract = await response.json();
+          if (seq !== requestSeq) return;  // a newer click superseded this one
+          renderContractData(contract);
+      } catch (error) {
+          if (seq !== requestSeq) return;
+          console.error("Live calculation failed:", error);
+          document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">Tasking Failed. API Unreachable.</td></tr>`;
       }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 

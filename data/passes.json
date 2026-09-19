@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-19T18:49:36Z",
+  "generated_at": "2026-09-19T19:37:57Z",
   "horizon_hours": 72,
   "satellites": [
     {
@@ -75,14 +75,16 @@
           "end_utc": "2026-09-19T19:55:03Z",
           "duration_s": 272,
           "max_elevation_deg": 30.1,
-          "lead_time_hours": 1.0,
+          "lead_time_hours": 0.2,
           "cloud_forecast_pct": 21,
           "scores": {
             "model": 0.7833,
             "forecast_only": 0.79,
             "climatology": 0.4069
           },
-          "verdict": "good"
+          "verdict": "good",
+          "limited_by": null,
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-27424-20260919T2128",
@@ -93,14 +95,16 @@
           "end_utc": "2026-09-19T21:31:44Z",
           "duration_s": 193,
           "max_elevation_deg": 24.0,
-          "lead_time_hours": 2.6,
+          "lead_time_hours": 1.8,
           "cloud_forecast_pct": 4,
           "scores": {
             "model": 0.784,
             "forecast_only": 0.96,
             "climatology": 0.4069
           },
-          "verdict": "marginal"
+          "verdict": "marginal",
+          "limited_by": "geometry",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25994-20260920T0129",
@@ -111,14 +115,16 @@
           "end_utc": "2026-09-20T01:36:13Z",
           "duration_s": 392,
           "max_elevation_deg": 82.3,
-          "lead_time_hours": 6.7,
+          "lead_time_hours": 5.9,
           "cloud_forecast_pct": 9,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.91,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-60989-20260920T0324",
@@ -129,14 +135,16 @@
           "end_utc": "2026-09-20T03:32:15Z",
           "duration_s": 441,
           "max_elevation_deg": 84.6,
-          "lead_time_hours": 8.6,
+          "lead_time_hours": 7.8,
           "cloud_forecast_pct": 78,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.22,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25544-20260920T0357",
@@ -147,14 +155,16 @@
           "end_utc": "2026-09-20T04:01:34Z",
           "duration_s": 247,
           "max_elevation_deg": 51.9,
-          "lead_time_hours": 9.1,
+          "lead_time_hours": 8.3,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": false
         },
         {
           "pass_id": "blacksburg-27424-20260920T0925",
@@ -165,32 +175,36 @@
           "end_utc": "2026-09-20T09:32:17Z",
           "duration_s": 390,
           "max_elevation_deg": 89.5,
-          "lead_time_hours": 14.6,
+          "lead_time_hours": 13.8,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25994-20260920T1330",
           "satellite": "TERRA",
           "norad_id": 25994,
           "start_utc": "2026-09-20T13:30:41Z",
-          "peak_utc": "2026-09-20T13:32:20Z",
+          "peak_utc": "2026-09-20T13:32:21Z",
           "end_utc": "2026-09-20T13:33:59Z",
           "duration_s": 198,
           "max_elevation_deg": 24.2,
-          "lead_time_hours": 18.7,
+          "lead_time_hours": 17.9,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0222,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25994-20260920T1507",
@@ -201,14 +215,16 @@
           "end_utc": "2026-09-20T15:12:05Z",
           "duration_s": 273,
           "max_elevation_deg": 30.0,
-          "lead_time_hours": 20.3,
+          "lead_time_hours": 19.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0222,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-27424-20260920T2027",
@@ -219,14 +235,16 @@
           "end_utc": "2026-09-20T20:33:29Z",
           "duration_s": 387,
           "max_elevation_deg": 76.0,
-          "lead_time_hours": 25.6,
+          "lead_time_hours": 24.8,
           "cloud_forecast_pct": 4,
           "scores": {
             "model": 0.6885,
             "forecast_only": 0.96,
             "climatology": 0.4069
           },
-          "verdict": "marginal"
+          "verdict": "marginal",
+          "limited_by": "clouds",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25544-20260920T2038",
@@ -237,14 +255,16 @@
           "end_utc": "2026-09-20T20:43:06Z",
           "duration_s": 247,
           "max_elevation_deg": 49.2,
-          "lead_time_hours": 25.8,
+          "lead_time_hours": 25.0,
           "cloud_forecast_pct": 4,
           "scores": {
             "model": 0.6885,
             "forecast_only": 0.96,
             "climatology": 0.4069
           },
-          "verdict": "marginal"
+          "verdict": "marginal",
+          "limited_by": "clouds",
+          "imaging": false
         },
         {
           "pass_id": "blacksburg-25994-20260921T0209",
@@ -255,14 +275,16 @@
           "end_utc": "2026-09-21T02:14:25Z",
           "duration_s": 324,
           "max_elevation_deg": 37.0,
-          "lead_time_hours": 31.3,
+          "lead_time_hours": 30.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25544-20260921T0309",
@@ -273,14 +295,16 @@
           "end_utc": "2026-09-21T03:14:07Z",
           "duration_s": 263,
           "max_elevation_deg": 82.8,
-          "lead_time_hours": 32.3,
+          "lead_time_hours": 31.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": false
         },
         {
           "pass_id": "blacksburg-27424-20260921T1003",
@@ -291,14 +315,16 @@
           "end_utc": "2026-09-21T10:09:08Z",
           "duration_s": 310,
           "max_elevation_deg": 35.2,
-          "lead_time_hours": 39.2,
+          "lead_time_hours": 38.4,
           "cloud_forecast_pct": 79,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.21,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25994-20260921T1408",
@@ -309,14 +335,16 @@
           "end_utc": "2026-09-21T14:14:24Z",
           "duration_s": 384,
           "max_elevation_deg": 63.9,
-          "lead_time_hours": 43.3,
+          "lead_time_hours": 42.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0696,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-40697-20260921T1609",
@@ -327,32 +355,36 @@
           "end_utc": "2026-09-21T16:16:57Z",
           "duration_s": 440,
           "max_elevation_deg": 81.6,
-          "lead_time_hours": 45.3,
+          "lead_time_hours": 44.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0696,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25544-20260921T1951",
           "satellite": "ISS (ZARYA)",
           "norad_id": 25544,
           "start_utc": "2026-09-21T19:51:11Z",
-          "peak_utc": "2026-09-21T19:53:23Z",
+          "peak_utc": "2026-09-21T19:53:24Z",
           "end_utc": "2026-09-21T19:55:36Z",
           "duration_s": 265,
           "max_elevation_deg": 89.1,
-          "lead_time_hours": 49.0,
+          "lead_time_hours": 48.2,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0812,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": false
         },
         {
           "pass_id": "blacksburg-27424-20260921T2105",
@@ -363,14 +395,16 @@
           "end_utc": "2026-09-21T21:10:46Z",
           "duration_s": 340,
           "max_elevation_deg": 41.4,
-          "lead_time_hours": 50.3,
+          "lead_time_hours": 49.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0812,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25994-20260922T0109",
@@ -381,14 +415,16 @@
           "end_utc": "2026-09-22T01:15:57Z",
           "duration_s": 362,
           "max_elevation_deg": 49.7,
-          "lead_time_hours": 54.3,
+          "lead_time_hours": 53.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25544-20260922T0222",
@@ -399,14 +435,16 @@
           "end_utc": "2026-09-22T02:26:16Z",
           "duration_s": 240,
           "max_elevation_deg": 45.6,
-          "lead_time_hours": 55.5,
+          "lead_time_hours": 54.7,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": false
         },
         {
           "pass_id": "blacksburg-39084-20260922T0305",
@@ -417,14 +455,16 @@
           "end_utc": "2026-09-22T03:12:08Z",
           "duration_s": 398,
           "max_elevation_deg": 89.9,
-          "lead_time_hours": 56.3,
+          "lead_time_hours": 55.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-40697-20260922T0325",
@@ -435,14 +475,16 @@
           "end_utc": "2026-09-22T03:32:29Z",
           "duration_s": 441,
           "max_elevation_deg": 84.6,
-          "lead_time_hours": 56.6,
+          "lead_time_hours": 55.8,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-27424-20260922T0903",
@@ -453,14 +495,16 @@
           "end_utc": "2026-09-22T09:09:58Z",
           "duration_s": 365,
           "max_elevation_deg": 51.3,
-          "lead_time_hours": 62.2,
+          "lead_time_hours": 61.4,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "night",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-25994-20260922T1446",
@@ -471,14 +515,16 @@
           "end_utc": "2026-09-22T14:52:50Z",
           "duration_s": 358,
           "max_elevation_deg": 48.2,
-          "lead_time_hours": 68.0,
+          "lead_time_hours": 67.1,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0812,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-49260-20260922T1555",
@@ -489,14 +535,16 @@
           "end_utc": "2026-09-22T16:02:32Z",
           "duration_s": 399,
           "max_elevation_deg": 89.7,
-          "lead_time_hours": 69.1,
+          "lead_time_hours": 68.3,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0812,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": true
         },
         {
           "pass_id": "blacksburg-60989-20260922T1619",
@@ -507,16 +555,122 @@
           "end_utc": "2026-09-22T16:26:39Z",
           "duration_s": 439,
           "max_elevation_deg": 81.0,
-          "lead_time_hours": 69.5,
+          "lead_time_hours": 68.7,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0812,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
-          "verdict": "bad"
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": true
+        },
+        {
+          "pass_id": "blacksburg-25544-20260922T1903",
+          "satellite": "ISS (ZARYA)",
+          "norad_id": 25544,
+          "start_utc": "2026-09-22T19:03:46Z",
+          "peak_utc": "2026-09-22T19:05:48Z",
+          "end_utc": "2026-09-22T19:07:50Z",
+          "duration_s": 244,
+          "max_elevation_deg": 47.9,
+          "lead_time_hours": 71.4,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.0812,
+            "forecast_only": 0.0,
+            "climatology": 0.4069
+          },
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": false
         }
-      ]
+      ],
+      "acquisition": {
+        "recommended_pass_id": "blacksburg-27424-20260919T1950",
+        "recommended_reason": "earliest good pass",
+        "hours_to_recommended": 0.2,
+        "p_image_24h": 0.7888,
+        "p_image_48h": 0.9388,
+        "p_image_horizon": 0.9483,
+        "median_hours_to_image": 0.2,
+        "weather_window_min": 180,
+        "cumulative": [
+          {
+            "pass_id": "blacksburg-27424-20260919T1950",
+            "peak_utc": "2026-09-19T19:52:47Z",
+            "hours": 0.2,
+            "p_image_by": 0.784
+          },
+          {
+            "pass_id": "blacksburg-25994-20260920T0129",
+            "peak_utc": "2026-09-20T01:32:56Z",
+            "hours": 5.9,
+            "p_image_by": 0.784
+          },
+          {
+            "pass_id": "blacksburg-27424-20260920T0925",
+            "peak_utc": "2026-09-20T09:29:03Z",
+            "hours": 13.9,
+            "p_image_by": 0.784
+          },
+          {
+            "pass_id": "blacksburg-25994-20260920T1330",
+            "peak_utc": "2026-09-20T13:32:21Z",
+            "hours": 17.9,
+            "p_image_by": 0.7888
+          },
+          {
+            "pass_id": "blacksburg-27424-20260920T2027",
+            "peak_utc": "2026-09-20T20:30:15Z",
+            "hours": 24.9,
+            "p_image_by": 0.9342
+          },
+          {
+            "pass_id": "blacksburg-25994-20260921T0209",
+            "peak_utc": "2026-09-21T02:11:42Z",
+            "hours": 30.6,
+            "p_image_by": 0.9342
+          },
+          {
+            "pass_id": "blacksburg-27424-20260921T1003",
+            "peak_utc": "2026-09-21T10:06:33Z",
+            "hours": 38.5,
+            "p_image_by": 0.9342
+          },
+          {
+            "pass_id": "blacksburg-25994-20260921T1408",
+            "peak_utc": "2026-09-21T14:11:12Z",
+            "hours": 42.6,
+            "p_image_by": 0.9388
+          },
+          {
+            "pass_id": "blacksburg-27424-20260921T2105",
+            "peak_utc": "2026-09-21T21:07:55Z",
+            "hours": 49.5,
+            "p_image_by": 0.9438
+          },
+          {
+            "pass_id": "blacksburg-25994-20260922T0109",
+            "peak_utc": "2026-09-22T01:12:56Z",
+            "hours": 53.6,
+            "p_image_by": 0.9438
+          },
+          {
+            "pass_id": "blacksburg-27424-20260922T0903",
+            "peak_utc": "2026-09-22T09:06:56Z",
+            "hours": 61.5,
+            "p_image_by": 0.9438
+          },
+          {
+            "pass_id": "blacksburg-25994-20260922T1446",
+            "peak_utc": "2026-09-22T14:49:51Z",
+            "hours": 67.2,
+            "p_image_by": 0.9483
+          }
+        ]
+      }
     }
   ]
 }

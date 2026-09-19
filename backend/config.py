@@ -48,19 +48,24 @@ SATELLITE_NAMES = [
 # instrument values: Landsat OLI 185 km, Sentinel-2 MSI 290 km, MODIS 2330 km.
 # The ISS is not an EO asset -- it stands in as a wide-FOV visual.
 SATELLITE_META = {
-    "LANDSAT 8": {"swath_km": 185, "color_hex": "#f4c430"},
-    "LANDSAT 9": {"swath_km": 185, "color_hex": "#ffa000"},
-    "SENTINEL 2A": {"swath_km": 290, "color_hex": "#00ff00"},
-    "SENTINEL 2B": {"swath_km": 290, "color_hex": "#00c853"},
-    "SENTINEL-2C": {"swath_km": 290, "color_hex": "#69f0ae"},
-    "TERRA": {"swath_km": 2330, "color_hex": "#00e5ff"},
-    "AQUA": {"swath_km": 2330, "color_hex": "#2979ff"},
-    "ISS (ZARYA)": {"swath_km": 1200, "color_hex": "#ff3333"},
+    "LANDSAT 8": {"swath_km": 185, "color_hex": "#f4c430", "imaging": True},
+    "LANDSAT 9": {"swath_km": 185, "color_hex": "#ffa000", "imaging": True},
+    "SENTINEL 2A": {"swath_km": 290, "color_hex": "#00ff00", "imaging": True},
+    "SENTINEL 2B": {"swath_km": 290, "color_hex": "#00c853", "imaging": True},
+    "SENTINEL-2C": {"swath_km": 290, "color_hex": "#69f0ae", "imaging": True},
+    "TERRA": {"swath_km": 2330, "color_hex": "#00e5ff", "imaging": True},
+    "AQUA": {"swath_km": 2330, "color_hex": "#2979ff", "imaging": True},
+    "ISS (ZARYA)": {"swath_km": 1200, "color_hex": "#ff3333", "imaging": False},
 }
 
 # Drop passes whose sensor swath never covers the target. A satellite can sit
 # 20 degrees above the horizon while its nadir camera images 800 km away.
 FOOTPRINT_FILTER = True
+
+# Time-to-image. Passes whose peaks fall within this many minutes see much the same
+# sky, so they count as one chance at a clear image, not several independent
+# ones. Only satellites with "imaging": True above count toward it.
+WEATHER_WINDOW_MIN = 180
 
 # Scoring
 CLOUD_USABLE_PCT = 30  # observed cloud below this counts as a usable image
@@ -91,6 +96,7 @@ TRAIN_START = "2023-09-01"
 TRAIN_END = "2026-09-01"
 
 # API
+PASSES_MAX_AGE_S = 3600  # older than this, /api/passes recomputes in memory
 API_HOST = "127.0.0.1"
 API_PORT = 8000
 CORS_ORIGINS = ["*"]  # hackathon: allow the partner's dev server from anywhere

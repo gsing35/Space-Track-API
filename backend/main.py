@@ -2,7 +2,9 @@
 
     .venv/bin/uvicorn backend.main:app --port 8000
 
-GET /api/passes     precomputed Blacksburg file, read once at import (~5 ms)
+GET /api/passes     precomputed Blacksburg file, read once at import (~5 ms);
+                    recomputed in memory once it is over an hour old, so lead
+                    times and time-to-image stay true during a long demo
 GET /api/calculate  live SGP4 + Open-Meteo + ML for any lat/lon (~1-3 s)
 
 The GP catalog is parsed from disk once at startup and the configured
@@ -11,6 +13,7 @@ Nothing here ever calls the live Space-Track API.
 """
 
 import json
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,6 +71,33 @@ _load()
 _load_targets()
 
 
+def _age_s(doc):
+    made = datetime.strptime(doc["generated_at"], "%Y-%m-%dT%H:%M:%SZ")
+    return (datetime.now(timezone.utc) - made.replace(tzinfo=timezone.utc)).total_seconds()
+
+
+def _refresh_if_stale():
+    """Swap in a fresh in-memory Blacksburg document when the file has aged.
+
+    Every lead time and "image in X hours" is relative to generated_at, so a
+    file from this morning is wrong by the afternoon. Never writes to disk;
+    on any failure the existing document is kept.
+    """
+    global _PASSES
+    if _TARGETS is None or _age_s(_PASSES) < config.PASSES_MAX_AGE_S:
+        return
+    try:
+        _PASSES = generate.compute_passes_for_target(
+            config.TARGET_LAT,
+            config.TARGET_LON,
+            config.TARGET_NAME,
+            target_id=config.TARGET_ID,
+            targets=_TARGETS,
+        )
+    except Exception:  # noqa: BLE001 -- a stale answer beats no answer
+        pass
+
+
 @app.get("/api/passes")
 def get_passes():
     """The full contract document: targets, each with its scored passes."""
@@ -77,6 +107,7 @@ def get_passes():
             detail=f"passes.json unavailable ({_LOAD_ERROR}). "
             f"Run: python -m backend.generate",
         )
+    _refresh_if_stale()
     return _PASSES
 
 
