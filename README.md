@@ -1,40 +1,173 @@
-# Space-Track GP catalog cache
+# ClearShot — satellite imaging windows
 
-Fetches a full GP (general perturbations) catalog snapshot from
-[Space-Track.org](https://www.space-track.org) and caches it to a local JSON file,
-optionally exporting a classic 3-line TLE file.
+**When is the soonest a satellite can take a clear picture of this place?**
 
-## Setup
+ClearShot combines orbit prediction, live cloud forecasts, sunlight and a trained model to
+answer that for any point or area on Earth, and shows it on a 3D globe. The repository also
+contains the Space-Track tool that caches the satellite catalog the predictions run on.
 
-1. Create a free Space-Track account: https://www.space-track.org/auth/createAccount
-2. Fill in credentials:
+- `backend/` — the prediction API (Python, FastAPI)
+- `frontend/` — the globe (one HTML file, CesiumJS)
+- `data/` — the cached catalog, the trained model and generated results
+- `tools/spacetrack_gp.py` — refreshes the catalog snapshot from Space-Track
+
+## Getting started from scratch
+
+Everything below assumes a fresh computer with nothing installed. Run every command from
+the project folder.
+
+### 1. Install Python 3.11 or newer
+
+Check what you have:
+
+```bash
+python3 --version
+```
+
+If that prints 3.11 or higher, skip ahead. Otherwise:
+
+| System | How to install |
+| --- | --- |
+| **Windows** | Install from [python.org/downloads](https://www.python.org/downloads/) and **tick "Add Python to PATH"** in the installer. Use `python` instead of `python3` in the commands below. |
+| **macOS** | `brew install python` ([Homebrew](https://brew.sh) first if needed), or the installer from python.org |
+| **Ubuntu / Debian** | `sudo apt update && sudo apt install python3 python3-venv python3-pip git` |
+| **Fedora** | `sudo dnf install python3 python3-pip git` |
+
+Developed and tested on Python 3.12.
+
+### 2. Get the code
+
+```bash
+git clone https://github.com/<your-account>/Space-Track-API.git
+cd Space-Track-API
+```
+
+No Git? Install it with the commands above, or download the repository as a ZIP from
+GitHub and unzip it.
+
+### 3. Create a virtual environment and install the dependencies
+
+A virtual environment keeps these packages out of your system Python. Some Linux
+distributions require one.
+
+```bash
+python3 -m venv .venv                     # Windows: python -m venv .venv
+.venv/bin/pip install -r requirements.txt # Windows: .venv\Scripts\pip install -r requirements.txt
+```
+
+That installs FastAPI and uvicorn (the web API), Skyfield (orbit math), scikit-learn and
+numpy (the model), and requests (the Space-Track tool). About 300 MB, a minute or two.
+
+Every command in this README uses `.venv/bin/python` and `.venv/bin/uvicorn`, so you never
+have to "activate" anything. On Windows the path is `.venv\Scripts\python`.
+
+### 4. Add a Cesium token for the globe
+
+The globe's map imagery comes from Cesium ion, which is free but needs a token.
+
+1. Sign up at [cesium.com/ion](https://cesium.com/ion/signup) (free).
+2. Open **Access Tokens** and copy the default token.
+3. Create a file called `config.js` **in the project root** containing exactly:
+
+   ```javascript
+   const CESIUM_TOKEN = 'paste-your-token-here';
+   ```
+
+`config.js` is gitignored, so your token is never committed. Without it the dashboard still
+works, but the Earth does not render.
+
+### 5. Run it
+
+Two terminals, both in the project folder.
+
+**Terminal 1 — the prediction API:**
+
+```bash
+.venv/bin/uvicorn backend.main:app --port 8000
+```
+
+**Terminal 2 — the web page:**
+
+```bash
+python3 -m http.server 5500
+```
+
+Then open **http://localhost:5500/frontend/index.html**.
+
+You should see the globe with satellites, and a panel reading "First likely clear image".
+Click the globe, type coordinates, search a place, or draw an area to retask it.
+
+Restart Terminal 1 after changing any backend file, or start it with `--reload`.
+
+### 6. Check that it works
+
+```bash
+curl http://localhost:8000/api/health
+```
+
+`"status": "ok"` means the API is up, and `tle_max_age_hours` tells you how old the orbit
+data is.
+
+### Troubleshooting
+
+| Symptom | Cause and fix |
+| --- | --- |
+| Panel says "Tasking Failed. API Unreachable." | Terminal 1 isn't running, or it's on a different port. |
+| Stars but no Earth | `config.js` is missing, or its token is wrong. Open the browser console (F12); a `config.js` error means the file has a typo. Make sure its first line is `const CESIUM_TOKEN = ...`. |
+| `externally-managed-environment` from pip | You skipped the virtual environment in step 3. |
+| `No module named fastapi` | You're using system Python. Use `.venv/bin/python`. |
+| Passes show but every score is climatology | The internet is unreachable, so cloud forecasts fall back to historical averages. The demo still runs. |
+| `data/model.pkl` missing | Retrain: `.venv/bin/python -m backend.train_model` (needs internet, takes a few minutes). |
+
+### Optional: refreshing the satellite catalog
+
+`data/gp_catalog.json` ships with the repository, so the project runs without a Space-Track
+account. The orbit data ages, though; after about a week predictions drift by kilometers.
+The dashboard's TLE badge turns yellow, then red, to warn you.
+
+To refresh it, you need your own free Space-Track account. Accounts are personal and
+rate-limited to roughly 30 requests per minute, and abuse gets them suspended, so run this
+by hand only when you actually need fresh data.
+
+1. Create an account: https://www.space-track.org/auth/createAccount
+2. Save your credentials:
 
    ```bash
    cp .env.example .env
    # edit .env and set SPACETRACK_USER and SPACETRACK_PASS
    ```
 
-3. Install the one dependency:
+   `.env` is gitignored. Never commit or share it.
+3. Fetch a new snapshot:
 
    ```bash
-   pip install requests
+   .venv/bin/python tools/spacetrack_gp.py
    ```
 
-## Usage
+The rest of this README covers that tool and how the prediction backend works.
+
+## Space-Track catalog tool
+
+`tools/spacetrack_gp.py` fetches a full GP (general perturbations) catalog snapshot from
+[Space-Track.org](https://www.space-track.org) and caches it to a local JSON file,
+optionally exporting a classic 3-line TLE file. Everything else in the project reads that
+cached file and never calls Space-Track.
+
+### Usage
 
 ```bash
-python3 spacetrack_gp.py                  # use cache if <8h old, else fetch
-python3 spacetrack_gp.py --force          # always hit the API
-python3 spacetrack_gp.py --max-age 6      # treat cache as stale after 6 hours
-python3 spacetrack_gp.py --no-tle         # cache the JSON, skip the .tle file
+.venv/bin/python tools/spacetrack_gp.py                 # use cache if <8h old, else fetch
+.venv/bin/python tools/spacetrack_gp.py --force         # always hit the API
+.venv/bin/python tools/spacetrack_gp.py --max-age 6     # treat cache as stale after 6 hours
+.venv/bin/python tools/spacetrack_gp.py --no-tle        # cache the JSON, skip the .tle file
 ```
 
 Every run leaves you with two files:
 
 | File | What it is |
 | --- | --- |
-| `gp_catalog.json` | The full cached snapshot — every GP field for every object |
-| `sats.tle` | Standard 3LE text, ready for STK / GMAT / gpredict / `sgp4` |
+| `data/gp_catalog.json` | The full cached snapshot — every GP field for every object |
+| `data/sats.tle` | Standard 3LE text, ready for STK / GMAT / gpredict / `sgp4` |
 
 ### Pulling individual satellites back out
 
@@ -43,17 +176,17 @@ limit. It takes a NORAD ID or a name substring (case-insensitive), comma-separat
 several at once:
 
 ```bash
-python3 spacetrack_gp.py --find 25544             # the ISS, by NORAD ID
-python3 spacetrack_gp.py --find starlink          # every Starlink, by name
-python3 spacetrack_gp.py --find 25544,iridium     # union of both
-python3 spacetrack_gp.py --find starlink --all    # don't cap at 50 results
+.venv/bin/python tools/spacetrack_gp.py --find 25544             # the ISS, by NORAD ID
+.venv/bin/python tools/spacetrack_gp.py --find starlink          # every Starlink, by name
+.venv/bin/python tools/spacetrack_gp.py --find 25544,iridium     # union of both
+.venv/bin/python tools/spacetrack_gp.py --find starlink --all    # don't cap at 50 results
 ```
 
 Matching TLEs go to **stdout** and all notes to **stderr**, so you can redirect straight
 into a file that a TLE parser will accept:
 
 ```bash
-python3 spacetrack_gp.py --find 25544 > iss.tle
+.venv/bin/python tools/spacetrack_gp.py --find 25544 > iss.tle
 ```
 
 Output is capped at 50 matches by default (`--find starlink` hits thousands); use
@@ -61,7 +194,7 @@ Output is capped at 50 matches by default (`--find starlink` hits thousands); us
 
 ### The cache file
 
-`gp_catalog.json` looks like this:
+`data/gp_catalog.json` looks like this:
 
 ```json
 {
@@ -229,7 +362,7 @@ Cloud forecasts, the historical archive used for training, and place-name search
 (geocoding, which uses GeoNames data) come from [Open-Meteo](https://open-meteo.com), free
 for non-commercial use under CC BY 4.0.
 
-`gp_catalog.json` and `sats.tle` are committed here as a point-in-time snapshot.
+`data/gp_catalog.json` and `data/sats.tle` are committed here as a point-in-time snapshot.
 Redistribution is permitted under USSPACECOM's standing grant:
 
 > USSPACECOM has provided express blanket approval for transfer/redistribution of basic
@@ -257,6 +390,6 @@ Register at https://www.space-track.org/auth/createAccount and put your own cred
 ### The snapshot goes stale
 
 TLEs decay in accuracy within days, and low-perigee objects drift fastest. `fetched_at` at
-the top of `gp_catalog.json` records when the committed copy was pulled. For anything
-operational, run `python3 spacetrack_gp.py --force` and use fresh elements rather than the
+the top of `data/gp_catalog.json` records when the committed copy was pulled. For anything
+operational, run `.venv/bin/python tools/spacetrack_gp.py --force` and use fresh elements rather than the
 snapshot in this repo.

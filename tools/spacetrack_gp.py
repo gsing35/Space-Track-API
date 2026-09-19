@@ -43,8 +43,11 @@ GP_CATALOG_QUERY = (
     "/orderby/norad_cat_id/format/json"
 )
 
-CACHE_PATH = Path(__file__).parent / "gp_catalog.json"
-TLE_PATH = Path(__file__).parent / "sats.tle"
+# The snapshot lives in data/, next to everything else the backend reads. This
+# script sits in tools/, so both paths are relative to the repository root.
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+CACHE_PATH = DATA_DIR / "gp_catalog.json"
+TLE_PATH = DATA_DIR / "sats.tle"
 DEFAULT_MAX_AGE_HOURS = 8.0
 DEFAULT_FIND_LIMIT = 50
 
