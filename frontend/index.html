@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ClearShot - Swarm Tasking Engine</title>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cesium/1.114.0/Cesium.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cesium/1.114.0/Widgets/widgets.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js"></script>
+  <script src="config.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    html, body, #cesiumContainer {
+      width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #000;
+    }
+
+    #dashboard {
+      position: absolute; top: 15px; left: 15px; width: 380px; max-height: 90vh; overflow-y: auto;
+      background: rgba(10, 14, 20, 0.90); border: 1px solid #1f2d3d; border-left: 3px solid #00e5ff;
+      border-radius: 6px; color: #cfd8dc; padding: 16px; z-index: 1000;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+    }
+    
+    #dashboard::-webkit-scrollbar { width: 6px; }
+    #dashboard::-webkit-scrollbar-thumb { background: #37474f; border-radius: 3px; }
+
+    h2 { margin: 0 0 4px 0; font-size: 16px; letter-spacing: 1.5px; color: #fff; text-transform: uppercase; }
+    .badge { font-size: 10px; background: #00e5ff; color: #000; padding: 2px 6px; border-radius: 3px; font-weight: bold; float: right;}
+    .subtext { font-size: 11px; color: #78909c; margin-bottom: 12px; }
+
+    .instructions {
+      background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.3);
+      padding: 8px; border-radius: 4px; font-size: 12px; color: #84ffff; margin-bottom: 12px; text-align: center;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px;}
+    th { text-align: left; color: #78909c; padding: 4px; border-bottom: 1px solid #263238; }
+    td { padding: 6px 4px; border-bottom: 1px solid #17202a; }
+    .pass-row { cursor: pointer; transition: background 0.2s; }
+    .pass-row:hover { background: rgba(0, 229, 255, 0.15); color: #00e5ff; }
+
+    .sat-tag { padding: 2px 4px; border-radius: 3px; font-weight: bold; font-size: 9px; color: #000; }
+  </style>
+</head>
+<body>
+
+  <div id="dashboard">
+    <h2>CLEARSHOT <span class="badge">SWARM CONTROL</span></h2>
+    <div class="subtext">Multi-Asset Constellation Tasking</div>
+
+    <div class="instructions">
+      🌍 <strong>Click 'View'</strong> on any pass below to jump to the AI-optimized window.
+    </div>
+
+    <div style="font-weight: 600; font-size: 12px; margin-top: 10px; color: #eceff1;">
+      Target: <span id="target-coords" style="color: #00e5ff;">Loading...</span>
+    </div>
+    
+    <table id="passes-table">
+      <thead>
+        <tr>
+          <th>Asset</th>
+          <th>AOS (UTC)</th>
+          <th>Clouds</th>
+          <th>Score</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="passes-body">
+        <tr><td colspan="5" style="text-align:center;">Loading Contract Data...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="cesiumContainer"></div>
+
+  <script>
+    // 1. Viewer Configuration
+    Cesium.Ion.defaultAccessToken = typeof CESIUM_TOKEN !== 'undefined' ? CESIUM_TOKEN : '';
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      animation: true, timeline: true, baseLayerPicker: false, geocoder: false,
+      homeButton: false, navigationHelpButton: false, sceneModePicker: false,
+      infoBox: false, selectionIndicator: false
+    });
+    viewer.scene.globe.enableLighting = true;
+    viewer.scene.globe.atmosphereLightIntensity = 12.0;
+
+    // Timeline Configuration (48h window)
+    const now = Cesium.JulianDate.fromDate(new Date());
+    const durationSeconds = 48 * 3600; 
+    const stopTime = Cesium.JulianDate.addSeconds(now, durationSeconds, new Cesium.JulianDate());
+    
+    viewer.clock.startTime = now;
+    viewer.clock.stopTime = stopTime;
+    viewer.clock.currentTime = now;
+    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+    viewer.clock.multiplier = 100;
+
+    let targetEntity = null;
+
+    // Mathematical utility: Great-Circle surface distance
+    function surfaceDistanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371.0;
+      const dLat = Cesium.Math.toRadians(lat2 - lat1);
+      const dLon = Cesium.Math.toRadians(lon2 - lon1);
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Cesium.Math.toRadians(lat1)) * Math.cos(Cesium.Math.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    // 3. Contract Loading & UI Generation Engine
+    async function loadContractData() {
+      try {
+        const response = await fetch('contract.json');
+        const contract = await response.json();
+        const tbody = document.getElementById('passes-body');
+        tbody.innerHTML = "";
+
+        if (!contract.targets || contract.targets.length === 0) return;
+
+        // Extract first target
+        const target = contract.targets[0];
+        document.getElementById('target-coords').innerText = `${target.name} (Lat ${target.lat.toFixed(2)}, Lon ${target.lon.toFixed(2)})`;
+        
+        // Plot Target on Globe
+        targetEntity = viewer.entities.add({
+          position: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 0),
+          point: { pixelSize: 10, color: Cesium.Color.AQUA },
+          label: { text: target.name, font: "12px monospace", fillColor: Cesium.Color.WHITE, showBackground: true, verticalOrigin: Cesium.VerticalOrigin.BOTTOM, pixelOffset: new Cesium.Cartesian2(0, -18) }
+        });
+
+        // Set initial camera view to target
+        viewer.camera.flyTo({ 
+          destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 4000000.0), 
+          duration: 0 
+        });
+
+        // Populate Dashboard Table from JSON Passes
+        target.passes.forEach(pass => {
+          // Use peak_utc so the camera jumps to the actual overlap
+          const peakTime = Cesium.JulianDate.fromIso8601(pass.peak_utc);
+          const timeStr = pass.peak_utc.substring(11, 16);
+          
+          const verdictColor = pass.verdict === 'good' ? '#00ff00' : (pass.verdict === 'bad' ? '#ff3333' : '#f4c430');
+          const scoreStr = (pass.scores.model * 100).toFixed(0) + '%';
+
+          const row = document.createElement('tr');
+          row.className = 'pass-row';
+          row.innerHTML = `
+            <td><span class="sat-tag" style="background:#f4c430">${pass.satellite}</span></td>
+            <td style="color:#fff;">${timeStr}</td>
+            <td style="color:${verdictColor};">${pass.cloud_forecast_pct}%</td>
+            <td>${scoreStr}</td>
+            <td style="color:#00e5ff;">View &#x25B6;</td>
+          `;
+          
+          row.onclick = () => { 
+            // Jump to exactly 15 seconds before the perfect overlap
+            viewer.clock.currentTime = Cesium.JulianDate.addSeconds(peakTime, -15, new Cesium.JulianDate()); 
+          };
+          
+          tbody.appendChild(row);
+        });
+
+        // 4. Propagate & Draw Satellites visually
+        contract.satellites.forEach(satConfig => {
+          const satrec = satellite.twoline2satrec(satConfig.tle1, satConfig.tle2);
+          const satPosProp = new Cesium.SampledPositionProperty();
+          const groundPosProp = new Cesium.SampledPositionProperty();
+          const swathRadiusKm = satConfig.swathKm / 2.0;
+          
+          // Calculate orbits
+          for (let t = 0; t <= durationSeconds; t += 30) {
+            const time = Cesium.JulianDate.addSeconds(now, t, new Cesium.JulianDate());
+            const jsDate = Cesium.JulianDate.toDate(time);
+            const pv = satellite.propagate(satrec, jsDate);
+
+            if (pv.position) {
+              const gmst = satellite.gstime(jsDate);
+              const geodetic = satellite.eciToGeodetic(pv.position, gmst);
+              const lat = Cesium.Math.toDegrees(geodetic.latitude);
+              const lon = Cesium.Math.toDegrees(geodetic.longitude);
+              const alt = geodetic.height * 1000;
+
+              satPosProp.addSample(time, Cesium.Cartesian3.fromDegrees(lon, lat, alt));
+              groundPosProp.addSample(time, Cesium.Cartesian3.fromDegrees(lon, lat, 0));
+            }
+          }
+
+          // Draw the physical satellite
+          viewer.entities.add({
+            position: satPosProp,
+            point: { pixelSize: 8, color: Cesium.Color.fromCssColorString(satConfig.colorHex) },
+            path: { resolution: 60, material: new Cesium.PolylineGlowMaterialProperty({ glowPower: 0.1, color: Cesium.Color.fromCssColorString(satConfig.colorHex).withAlpha(0.5) }), width: 2 }
+          });
+
+          // Draw the dynamic ground swath
+          viewer.entities.add({
+            position: groundPosProp,
+            ellipse: {
+              semiMinorAxis: satConfig.swathKm * 500, semiMajorAxis: satConfig.swathKm * 500,
+              material: new Cesium.ColorMaterialProperty(new Cesium.CallbackProperty((time) => {
+                  const sPos = satPosProp.getValue(time);
+                  if(sPos) {
+                      const c = Cesium.Cartographic.fromCartesian(sPos);
+                      const d = surfaceDistanceKm(Cesium.Math.toDegrees(c.latitude), Cesium.Math.toDegrees(c.longitude), target.lat, target.lon);
+                      // Flash gold if the satellite footprint intersects the target
+                      if(d <= swathRadiusKm) return Cesium.Color.GOLD.withAlpha(0.6); 
+                  }
+                  return Cesium.Color.fromCssColorString(satConfig.colorHex).withAlpha(0.15);
+              }, false)),
+              outline: true, outlineColor: Cesium.Color.fromCssColorString(satConfig.colorHex)
+            }
+          });
+        });
+
+      } catch (error) {
+        console.error("Failed to load contract.json:", error);
+      }
+    }
+
+    loadContractData();
+  </script>
+</body>
+</html>
