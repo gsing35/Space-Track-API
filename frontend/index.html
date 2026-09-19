@@ -220,6 +220,7 @@
 
     <div id="acq" style="display:none"></div>
 
+    <div class="section-label">Passes &middot; best &rarr; worst</div>
     <table id="passes-table">
       <thead>
         <tr>
@@ -414,7 +415,6 @@
       });
 
       satsBuiltFor = signature;
-      renderSatFilter(contract);
       // removeAll() above also took the cloud overlay; re-add it (served from cache)
       if (cloudsOn && current) {
         const [la, lo] = current.aoi ? centroidOf(current.aoi) : [current.lat, current.lon];
@@ -436,10 +436,18 @@
         + `refresh with tools/spacetrack_gp.py.`;
     }
 
-    function renderSatFilter(contract) {
+    // Chips are ordered best to worst: by each satellite's best score for the
+    // current target. Excluded satellites and ones with no passes go last.
+    function renderSatFilter(contract, target) {
       const box = $('sat-filter');
       box.innerHTML = '';
-      contract.satellites.forEach(s => {
+      const best = {};
+      ((target && target.passes) || []).forEach(p => {
+        best[p.norad_id] = Math.max(best[p.norad_id] ?? -1, p.scores.model);
+      });
+      const rank = s => (excluded.has(s.norad_id) ? -3 : (best[s.norad_id] ?? -2));
+      const ordered = contract.satellites.slice().sort((a, b) => rank(b) - rank(a));
+      ordered.forEach(s => {
         if (s.norad_id === undefined) return;
         const chip = document.createElement('span');
         chip.className = 'sat-chip' + (excluded.has(s.norad_id) ? ' off' : '');
@@ -447,7 +455,8 @@
         chip.querySelector('.dot').style.background = s.colorHex;
         chip.querySelector('.nm').textContent = s.id;
         chip.querySelector('.age').textContent = fmtAge(s.tle_age_hours);
-        chip.title = `NORAD ${s.norad_id} · TLE epoch ${s.epoch_utc || 'unknown'} (${fmtAge(s.tle_age_hours)} old)`;
+        const bestTxt = best[s.norad_id] === undefined ? 'no passes over this target' : `best pass ${pct(best[s.norad_id])}`;
+        chip.title = `${bestTxt} · NORAD ${s.norad_id} · TLE epoch ${s.epoch_utc || 'unknown'} (${fmtAge(s.tle_age_hours)} old)`;
         chip.onclick = () => toggleSatellite(s.norad_id, chip);
         box.appendChild(chip);
       });
@@ -566,7 +575,9 @@
       const label = {
         text: displayName, font: "bold 14px 'Rajdhani'", fillColor: Cesium.Color.WHITE,
         showBackground: true, backgroundColor: new Cesium.Color(0, 0.9, 1.0, 0.3),
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM, pixelOffset: new Cesium.Cartesian2(0, -15)
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM, pixelOffset: new Cesium.Cartesian2(0, -15),
+        // Never hidden by the globe surface or the cloud overlay, at any camera angle
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
       };
 
       if (target.type === 'area' && target.aoi) {
@@ -589,7 +600,8 @@
       }
       targetEntities.push(viewer.entities.add({
         position: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 0),
-        point: { pixelSize: 8, color: Cesium.Color.WHITE, outlineColor: Cesium.Color.AQUA, outlineWidth: 3 },
+        point: { pixelSize: 8, color: Cesium.Color.WHITE, outlineColor: Cesium.Color.AQUA, outlineWidth: 3,
+                 disableDepthTestDistance: Number.POSITIVE_INFINITY },
         label: label
       }));
     }
@@ -608,6 +620,7 @@
         renderTleBadge(contract);
 
         const target = contract.targets[0];
+        renderSatFilter(contract, target);
         const displayName = target.name || "Custom Target";
         const kind = target.type === 'area' ? 'AREA · ' : '';
         $('target-coords').innerText = `${kind}${displayName} | ${target.lat.toFixed(3)}°, ${target.lon.toFixed(3)}°`;
@@ -630,7 +643,16 @@
             return;
         }
 
-        target.passes.forEach(pass => {
+        // Best to worst: the recommended pass, then good > marginal > bad,
+        // then highest score, then earliest. Night passes sink to the bottom.
+        const verdictRank = { good: 0, marginal: 1, bad: 2 };
+        const ordered = target.passes.slice().sort((a, b) =>
+          (b.pass_id === recId) - (a.pass_id === recId)
+          || (verdictRank[a.verdict] ?? 3) - (verdictRank[b.verdict] ?? 3)
+          || b.scores.model - a.scores.model
+          || a.peak_utc.localeCompare(b.peak_utc));
+
+        ordered.forEach(pass => {
           let verdictColor = '#f4c430';
           let glowColor = 'rgba(244, 196, 48, 0.5)';
           if (pass.verdict === 'good') {
@@ -780,6 +802,17 @@
       grid.t0 = Date.parse(grid.times[0]);
       cloudGrid = grid;
       const half = grid.step_deg / 2;
+
+      // Dashed outline marking where the forecast grid ends
+      const s0 = Math.max(-90, Math.min(...grid.lats) - half), n0 = Math.min(90, Math.max(...grid.lats) + half);
+      const w0 = Math.min(...grid.lons) - half, e0 = Math.max(...grid.lons) + half;
+      cloudEntities.push(viewer.entities.add({
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArray([w0, s0, e0, s0, e0, n0, w0, n0, w0, s0]),
+          width: 2, clampToGround: true,
+          material: new Cesium.PolylineDashMaterialProperty({ color: Cesium.Color.WHITE.withAlpha(0.8), dashLength: 12.0 })
+        }
+      }));
       grid.lats.forEach((la, i) => {
         const lo = grid.lons[i];
         cloudEntities.push(viewer.entities.add({
@@ -886,7 +919,7 @@
         drawPts.push([lat, lon]);
         drawMarkers.push(viewer.entities.add({
           position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
-          point: { pixelSize: 6, color: Cesium.Color.YELLOW }
+          point: { pixelSize: 6, color: Cesium.Color.YELLOW, disableDepthTestDistance: Number.POSITIVE_INFINITY }
         }));
         updateDrawUi();
         return;
