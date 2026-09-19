@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <title>ClearShot - Swarm Tasking Engine</title>
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-  
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cesium/1.114.0/Cesium.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cesium/1.114.0/Widgets/widgets.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js"></script>
@@ -24,58 +24,66 @@
     /* Glassmorphism Command Center UI */
     #dashboard {
       position: absolute; top: 20px; left: 20px; width: 420px; max-height: calc(100vh - 160px); overflow-y: auto;
-      background: rgba(4, 10, 20, 0.65); 
-      border: 1px solid rgba(0, 229, 255, 0.2); 
+      background: rgba(4, 10, 20, 0.65);
+      border: 1px solid rgba(0, 229, 255, 0.2);
       border-top: 3px solid #00e5ff;
       border-radius: 8px; color: #cfd8dc; padding: 20px; z-index: 1000;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.8), inset 0 0 20px rgba(0, 229, 255, 0.05); 
+      box-shadow: 0 12px 32px rgba(0,0,0,0.8), inset 0 0 20px rgba(0, 229, 255, 0.05);
       backdrop-filter: blur(12px);
       font-family: 'Rajdhani', sans-serif;
     }
-    
+
     #dashboard::-webkit-scrollbar { width: 4px; }
     #dashboard::-webkit-scrollbar-thumb { background: #00e5ff; border-radius: 2px; }
 
-    h2 { 
-      margin: 0 0 8px 0; font-size: 22px; font-weight: 700; letter-spacing: 2px; 
+    h2 {
+      margin: 0 0 8px 0; font-size: 22px; font-weight: 700; letter-spacing: 2px;
       color: #fff; text-transform: uppercase; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
     }
-    
-    .badge { 
-      font-size: 12px; background: rgba(0, 229, 255, 0.1); color: #00e5ff; 
-      border: 1px solid #00e5ff; padding: 3px 8px; border-radius: 4px; 
+
+    .badge {
+      font-size: 12px; background: rgba(0, 229, 255, 0.1); color: #00e5ff;
+      border: 1px solid #00e5ff; padding: 3px 8px; border-radius: 4px;
       font-weight: 700; float: right; font-family: 'Share Tech Mono', monospace;
-      box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+      box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); margin-left: 6px;
     }
-    
+    /* TLE age badge: how old the orbit data is */
+    .badge.tle { cursor: help; }
+    .badge.tle.fresh { color: #00ff66; border-color: #00ff66; background: rgba(0, 255, 102, 0.1); box-shadow: 0 0 8px rgba(0, 255, 102, 0.3); }
+    .badge.tle.stale { color: #f4c430; border-color: #f4c430; background: rgba(244, 196, 48, 0.1); box-shadow: 0 0 8px rgba(244, 196, 48, 0.3); }
+    .badge.tle.old { color: #ff003c; border-color: #ff003c; background: rgba(255, 0, 60, 0.1); box-shadow: 0 0 8px rgba(255, 0, 60, 0.3); }
+
     .subtext { font-size: 14px; color: #829ab1; margin-bottom: 16px; font-weight: 500; }
 
     .instructions {
       background: rgba(0, 229, 255, 0.05); border-left: 3px solid #00e5ff;
-      padding: 10px; border-radius: 0 4px 4px 0; font-size: 13px; color: #84ffff; 
-      margin-bottom: 16px;
+      padding: 10px; border-radius: 0 4px 4px 0; font-size: 13px; color: #84ffff;
+      margin-bottom: 14px;
     }
+
+    .section-label { font-family: 'Share Tech Mono', monospace; font-size: 11px; margin-bottom: 4px; color: #829ab1; text-transform: uppercase; }
 
     /* Radar-Style Table */
     table { width: 100%; border-collapse: separate; border-spacing: 0 6px; font-family: 'Share Tech Mono', monospace; font-size: 12px; }
     th { text-align: left; color: #829ab1; padding: 0 8px 8px 8px; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600; text-transform: uppercase;}
-    
-    .pass-row { 
-      cursor: pointer; transition: all 0.2s; 
+
+    .pass-row {
+      cursor: pointer; transition: all 0.2s;
       background: rgba(16, 32, 56, 0.4);
     }
     .pass-row td { padding: 10px 8px; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
     .pass-row td:first-child { border-left: 1px solid rgba(255,255,255,0.05); border-radius: 4px 0 0 4px; }
     .pass-row td:last-child { border-right: 1px solid rgba(255,255,255,0.05); border-radius: 0 4px 4px 0; }
-    
-    .pass-row:hover { 
-      background: rgba(0, 229, 255, 0.15); 
+
+    .pass-row:hover {
+      background: rgba(0, 229, 255, 0.15);
       transform: translateX(4px);
       box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
     }
     .pass-row:hover td { border-color: rgba(0, 229, 255, 0.3); }
 
     .sat-tag { padding: 3px 6px; border-radius: 3px; font-weight: bold; font-size: 10px; color: #000; text-transform: uppercase; }
+
     /* Time-to-image panel */
     #acq { background: rgba(0, 255, 102, 0.06); border: 1px solid rgba(0, 255, 102, 0.35); border-radius: 6px; padding: 12px; margin-bottom: 14px; }
     #acq.none { background: rgba(255, 0, 60, 0.06); border-color: rgba(255, 0, 60, 0.35); }
@@ -90,27 +98,83 @@
     .btn-jump { margin-top: 10px; width: 100%; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1px;
       color: #02060f; background: #00ff66; border: none; border-radius: 4px; padding: 6px; text-transform: uppercase; }
     .btn-jump:hover { box-shadow: 0 0 12px rgba(0, 255, 102, 0.6); }
+
+    /* P(image) chart */
+    .chart { margin-top: 10px; }
+    .chart svg { width: 100%; height: auto; display: block; }
+    .chart .step { fill: none; stroke: #00ff66; stroke-width: 2; }
+    .chart .area { fill: rgba(0, 255, 102, 0.12); stroke: none; }
+    .chart .axis { stroke: rgba(130, 154, 177, 0.5); stroke-width: 1; }
+    .chart .half { stroke: rgba(244, 196, 48, 0.7); stroke-width: 1; stroke-dasharray: 4 3; }
+    .chart .rec { stroke: #00ff66; stroke-width: 1; stroke-dasharray: 2 2; }
+    .chart text { fill: #829ab1; font-family: 'Share Tech Mono', monospace; font-size: 9px; }
+    .chart .pt { fill: #02060f; stroke: #00ff66; stroke-width: 1.5; cursor: pointer; }
+    .chart .pt:hover { fill: #00ff66; }
+    #acq.none .chart .step { stroke: #ff6b8b; }
+    #acq.none .chart .area { fill: rgba(255, 0, 60, 0.1); }
+    #acq.none .chart .pt { stroke: #ff6b8b; }
+
     .pass-row.rec { background: rgba(0, 255, 102, 0.14); }
     .pass-row.rec td { border-color: rgba(0, 255, 102, 0.6); }
     .pass-row.night { opacity: 0.38; }
     .lead { display: block; font-size: 10px; color: #829ab1; }
     .tag-note { font-size: 10px; color: #829ab1; text-transform: uppercase; }
 
-    /* Coordinate entry */
-    #coord-form { display: flex; gap: 6px; margin-bottom: 6px; }
-    #coord-form input {
+    /* Inputs shared by search, coordinates and buttons */
+    .field {
       min-width: 0; flex: 1; background: rgba(16, 32, 56, 0.6); color: #fff;
       border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 4px; padding: 6px 7px;
       font-family: 'Share Tech Mono', monospace; font-size: 12px; outline: none;
     }
-    #coord-form input:focus { border-color: #00e5ff; box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); }
-    #coord-form input#in-name { flex: 1.4; }
-    #coord-form button {
+    .field:focus { border-color: #00e5ff; box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); }
+    .btn {
       cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 1px;
-      color: #02060f; background: #00e5ff; border: none; border-radius: 4px; padding: 0 10px; text-transform: uppercase;
+      color: #02060f; background: #00e5ff; border: none; border-radius: 4px; padding: 5px 10px; text-transform: uppercase;
     }
-    #coord-form button:hover { box-shadow: 0 0 10px rgba(0, 229, 255, 0.6); }
-    #coord-error { min-height: 16px; margin-bottom: 8px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #ff6b8b; }
+    .btn:hover { box-shadow: 0 0 10px rgba(0, 229, 255, 0.6); }
+    .btn.ghost { background: rgba(0, 229, 255, 0.08); color: #00e5ff; border: 1px solid rgba(0, 229, 255, 0.4); }
+    .btn.ghost.on { background: #00e5ff; color: #02060f; }
+    .btn.warn { background: rgba(255, 0, 60, 0.15); color: #ff6b8b; border: 1px solid rgba(255, 0, 60, 0.4); }
+
+    /* Place search */
+    #search-wrap { position: relative; margin-bottom: 12px; }
+    #search { width: 100%; font-size: 13px; padding: 8px 9px; }
+    #search-results {
+      position: absolute; left: 0; right: 0; top: 100%; margin-top: 2px; z-index: 5; display: none;
+      background: rgba(4, 12, 24, 0.97); border: 1px solid rgba(0, 229, 255, 0.35); border-radius: 4px; overflow: hidden;
+    }
+    .search-item { padding: 7px 9px; cursor: pointer; font-size: 14px; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .search-item small { color: #829ab1; font-family: 'Share Tech Mono', monospace; font-size: 11px; }
+    .search-item:hover, .search-item.active { background: rgba(0, 229, 255, 0.15); }
+    .search-empty { padding: 7px 9px; font-size: 12px; color: #829ab1; font-family: 'Share Tech Mono', monospace; }
+
+    /* Coordinate entry and tools */
+    #coord-form { display: flex; gap: 6px; margin-bottom: 6px; }
+    #coord-form #in-name { flex: 1.4; }
+    .tool-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+    .tool-row .hint { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #84ffff; }
+    #coord-error { min-height: 16px; margin-bottom: 6px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #ff6b8b; }
+
+    /* Satellite filter */
+    #sat-filter { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+    .sat-chip {
+      cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 7px; border-radius: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px;
+      background: rgba(16, 32, 56, 0.6); border: 1px solid rgba(255,255,255,0.15); color: #fff;
+    }
+    .sat-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .sat-chip .age { color: #829ab1; }
+    .sat-chip.off { opacity: 0.35; text-decoration: line-through; }
+
+    /* Cloud legend */
+    #cloud-legend {
+      position: absolute; right: 20px; top: 20px; z-index: 1000; display: none;
+      background: rgba(4, 10, 20, 0.75); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px;
+      padding: 8px 10px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #cfd8dc;
+    }
+    #cloud-legend .bar { width: 160px; height: 8px; margin: 5px 0 3px; border-radius: 2px;
+      background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.75)); border: 1px solid rgba(255,255,255,0.25); }
+    #cloud-legend .ends { display: flex; justify-content: space-between; color: #829ab1; font-size: 10px; }
 
     .btn-view { color: #00e5ff; font-weight: bold; background: rgba(0, 229, 255, 0.1); padding: 4px 8px; border-radius: 3px; text-transform: uppercase; font-size: 10px;}
   </style>
@@ -118,27 +182,41 @@
 <body>
 
   <div id="dashboard">
-    <h2>CLEARSHOT <span class="badge">LIVE</span></h2>
+    <h2>CLEARSHOT <span class="badge">LIVE</span><span class="badge tle" id="tle-badge" style="display:none"></span></h2>
     <div class="subtext">AI-Optimized Image Acquisition</div>
 
     <div class="instructions">
-      <strong>STANDBY:</strong> Select a predicted pass below to initiate intercept vector.
+      <strong>STANDBY:</strong> Search a place, type coordinates, click the globe, or draw an area. Select a pass to initiate intercept vector.
     </div>
 
-    <div style="font-family: 'Share Tech Mono'; font-size: 11px; margin-bottom: 4px; color: #829ab1; text-transform: uppercase;">
-      Active Target Coordinates
+    <div id="search-wrap">
+      <input id="search" class="field" placeholder="Search a place (e.g. Kyiv) or paste lat, lon" autocomplete="off" aria-label="Search a place">
+      <div id="search-results"></div>
     </div>
-    <div style="font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 16px; text-shadow: 0 0 8px rgba(255,255,255,0.3);">
+
+    <div class="section-label">Active Target Coordinates</div>
+    <div style="font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 12px; text-shadow: 0 0 8px rgba(255,255,255,0.3);">
       <span id="target-coords">Awaiting Telemetry...</span>
     </div>
-    
+
     <form id="coord-form" autocomplete="off">
-      <input id="in-lat" placeholder="LAT" inputmode="decimal" aria-label="Latitude">
-      <input id="in-lon" placeholder="LON" inputmode="decimal" aria-label="Longitude">
-      <input id="in-name" placeholder="NAME (opt.)" maxlength="80" aria-label="Target name">
-      <button type="submit">Retask</button>
+      <input id="in-lat" class="field" placeholder="LAT" inputmode="decimal" aria-label="Latitude">
+      <input id="in-lon" class="field" placeholder="LON" inputmode="decimal" aria-label="Longitude">
+      <input id="in-name" class="field" placeholder="NAME (opt.)" maxlength="80" aria-label="Target name">
+      <button type="submit" class="btn">Retask</button>
     </form>
+    <div class="tool-row">
+      <button type="button" class="btn ghost" id="btn-draw">Draw area</button>
+      <button type="button" class="btn" id="btn-finish" style="display:none">Finish</button>
+      <button type="button" class="btn warn" id="btn-cancel" style="display:none">Cancel</button>
+      <span class="hint" id="draw-hint"></span>
+      <span style="flex:1"></span>
+      <button type="button" class="btn ghost" id="btn-clouds" title="Forecast cloud cover around the target, following the timeline">Clouds</button>
+    </div>
     <div id="coord-error"></div>
+
+    <div class="section-label">Satellites <span style="text-transform:none">(click to exclude &middot; orbit data age)</span></div>
+    <div id="sat-filter"></div>
 
     <div id="acq" style="display:none"></div>
 
@@ -158,9 +236,17 @@
     </table>
   </div>
 
+  <div id="cloud-legend">
+    <div>Forecast cloud cover (Open-Meteo)</div>
+    <div class="bar"></div>
+    <div class="ends"><span>0%</span><span id="cloud-time"></span><span>100%</span></div>
+  </div>
+
   <div id="cesiumContainer"></div>
 
   <script>
+    const API = 'http://localhost:8000';
+
     // 1. Core Engine Setup
     Cesium.Ion.defaultAccessToken = typeof CESIUM_TOKEN !== 'undefined' ? CESIUM_TOKEN : '';
     const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -173,15 +259,22 @@
     viewer.scene.globe.atmosphereLightIntensity = 15.0;
     viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
+    const $ = (id) => document.getElementById(id);
+
     // Timeline. Anchored to the contract's generated_at (not the browser clock),
     // so every pass in the table falls inside the sampled orbit range.
     const SAMPLE_STEP_S = 30;
     let durationSeconds = 72 * 3600;
     let epoch = null;          // JulianDate the orbits were sampled from
     let satsBuiltFor = null;   // TLE signature of the satellites on the globe
-    let activeTarget = null;   // read live by the swath highlight callbacks
-    let targetEntity = null;
-    let requestSeq = 0;        // only the newest click is allowed to render
+    let activeSamples = [];    // [{lat, lon}] read live by the swath highlight callbacks
+    let targetEntities = [];
+    let requestSeq = 0;        // only the newest request is allowed to render
+
+    // What is currently targeted, so filter changes can re-ask for the same thing.
+    let current = null;        // {lat, lon, name} or {aoi: [[lat, lon], ...], name}
+    const satEntities = {};    // norad_id -> [entities]
+    const excluded = new Set(); // norad_ids the user switched off
 
     function surfaceDistanceKm(lat1, lon1, lat2, lon2) {
       const R = 6371.0;
@@ -202,7 +295,16 @@
       return h < 1 ? `${Math.round(h * 60)} min` : `${h.toFixed(1)} h`;
     }
 
+    function fmtAge(hours) {
+      if (hours === null || hours === undefined) return '?';
+      return hours < 48 ? `${Math.round(hours)} h` : `${(hours / 24).toFixed(1)} d`;
+    }
+
     function pct(p) { return `${Math.round(p * 100)}%`; }
+
+    function centroidOf(poly) {
+      return [poly.reduce((s, p) => s + p[0], 0) / poly.length, poly.reduce((s, p) => s + p[1], 0) / poly.length];
+    }
 
     function jumpTo(pass) {
       const peak = Cesium.JulianDate.fromIso8601(pass.peak_utc);
@@ -210,8 +312,9 @@
       viewer.clock.multiplier = 1.0;
     }
 
+    // ---------------------------------------------------------------- orbits
     // Orbits depend only on the TLEs, never on the target, so they are
-    // propagated once instead of on every click (8 sats x 8,640 samples).
+    // propagated once instead of on every request (8 sats x 8,640 samples).
     function buildSatellites(contract) {
       const signature = contract.satellites.map(s => s.tle1).join('|');
       const genTime = Cesium.JulianDate.fromIso8601(contract.generated_at);
@@ -220,7 +323,10 @@
 
       const t0 = performance.now();
       viewer.entities.removeAll();
-      targetEntity = null;
+      targetEntities = [];
+      cloudEntities = [];
+      if (drawMode) endDraw();
+      for (const k of Object.keys(satEntities)) delete satEntities[k];
       epoch = genTime;
       durationSeconds = (contract.horizon_hours || 72) * 3600;
       viewer.clock.startTime = epoch.clone();
@@ -253,7 +359,7 @@
           interpolationAlgorithm: Cesium.LagrangePolynomialApproximation
         });
 
-        viewer.entities.add({
+        const body = viewer.entities.add({
           position: satPosProp,
           orientation: new Cesium.VelocityOrientationProperty(satPosProp),
           model: { uri: '../satellite.glb', minimumPixelSize: 64, maximumScale: 20000 },
@@ -261,7 +367,7 @@
           path: { resolution: 120, material: new Cesium.PolylineGlowMaterialProperty({ glowPower: 0.1, color: color.withAlpha(0.8) }), width: 2 }
         });
 
-        viewer.entities.add({
+        const swath = viewer.entities.add({
           // Project the footprint exactly onto the surface to prevent underground sinking
           position: new Cesium.CallbackProperty((time) => {
             const sPos = satPosProp.getValue(time);
@@ -273,10 +379,13 @@
             semiMinorAxis: satConfig.swathKm * 500, semiMajorAxis: satConfig.swathKm * 500,
             material: new Cesium.ColorMaterialProperty(new Cesium.CallbackProperty((time) => {
               const sPos = satPosProp.getValue(time);
-              if (sPos && activeTarget) {
+              if (sPos && activeSamples.length) {
                 const c = Cesium.Cartographic.fromCartesian(sPos);
-                const d = surfaceDistanceKm(Cesium.Math.toDegrees(c.latitude), Cesium.Math.toDegrees(c.longitude), activeTarget.lat, activeTarget.lon);
-                if (d <= swathRadiusKm) return Cesium.Color.GOLD.withAlpha(0.6);
+                const lat = Cesium.Math.toDegrees(c.latitude), lon = Cesium.Math.toDegrees(c.longitude);
+                // Gold while the swath covers the point, or any part of the area
+                if (activeSamples.some(s => surfaceDistanceKm(lat, lon, s.lat, s.lon) <= swathRadiusKm)) {
+                  return Cesium.Color.GOLD.withAlpha(0.6);
+                }
               }
               return color.withAlpha(0.15);
             }, false)),
@@ -284,7 +393,7 @@
           }
         });
 
-        viewer.entities.add({
+        const nadir = viewer.entities.add({
           polyline: {
             // Dotted nadir line follows the clamped surface point
             positions: new Cesium.CallbackProperty((time) => {
@@ -297,15 +406,121 @@
             material: new Cesium.PolylineDashMaterialProperty({ color: color.withAlpha(0.7), dashLength: 15.0 })
           }
         });
+
+        const ents = [body, swath, nadir];
+        const hidden = excluded.has(satConfig.norad_id);
+        ents.forEach(e => { e.show = !hidden; });
+        if (satConfig.norad_id !== undefined) satEntities[satConfig.norad_id] = ents;
       });
 
       satsBuiltFor = signature;
+      renderSatFilter(contract);
+      // removeAll() above also took the cloud overlay; re-add it (served from cache)
+      if (cloudsOn && current) {
+        const [la, lo] = current.aoi ? centroidOf(current.aoi) : [current.lat, current.lon];
+        loadClouds(la, lo);
+      }
       console.log(`Orbits propagated in ${(performance.now() - t0).toFixed(0)} ms`);
+    }
+
+    // ------------------------------------------------ satellite filter + TLE age
+    function renderTleBadge(contract) {
+      const badge = $('tle-badge');
+      const age = contract.tle_age;
+      if (!age || age.max_hours === null || age.max_hours === undefined) { badge.style.display = 'none'; return; }
+      badge.style.display = '';
+      badge.className = `badge tle ${age.status}`;
+      badge.textContent = `TLE ${fmtAge(age.max_hours)}`;
+      badge.title = `Orbit data age: oldest ${fmtAge(age.max_hours)}, newest ${fmtAge(age.min_hours)} (${age.status}).\n`
+        + `From the saved Space-Track catalog. Predictions drift after about a week; `
+        + `refresh with tools/spacetrack_gp.py.`;
+    }
+
+    function renderSatFilter(contract) {
+      const box = $('sat-filter');
+      box.innerHTML = '';
+      contract.satellites.forEach(s => {
+        if (s.norad_id === undefined) return;
+        const chip = document.createElement('span');
+        chip.className = 'sat-chip' + (excluded.has(s.norad_id) ? ' off' : '');
+        chip.innerHTML = `<span class="dot"></span><span class="nm"></span><span class="age"></span>`;
+        chip.querySelector('.dot').style.background = s.colorHex;
+        chip.querySelector('.nm').textContent = s.id;
+        chip.querySelector('.age').textContent = fmtAge(s.tle_age_hours);
+        chip.title = `NORAD ${s.norad_id} · TLE epoch ${s.epoch_utc || 'unknown'} (${fmtAge(s.tle_age_hours)} old)`;
+        chip.onclick = () => toggleSatellite(s.norad_id, chip);
+        box.appendChild(chip);
+      });
+    }
+
+    function toggleSatellite(noradId, chip) {
+      const all = Object.keys(satEntities).map(Number);
+      if (!excluded.has(noradId) && excluded.size >= all.length - 1) {
+        $('coord-error').textContent = 'Keep at least one satellite selected.';
+        return;
+      }
+      if (excluded.has(noradId)) excluded.delete(noradId); else excluded.add(noradId);
+      chip.classList.toggle('off', excluded.has(noradId));
+      (satEntities[noradId] || []).forEach(e => { e.show = !excluded.has(noradId); });
+      // Re-ask the backend so time-to-image reflects only the chosen fleet.
+      if (current) retask(current, { fly: false });
+    }
+
+    function satsParam() {
+      if (!excluded.size) return '';
+      const ids = Object.keys(satEntities).map(Number).filter(id => !excluded.has(id));
+      return `&sats=${ids.join(',')}`;
+    }
+
+    // ------------------------------------------------------------- P(image) chart
+    function renderChart(acq, passes) {
+      const W = 380, H = 96, L = 26, R = 8, T = 8, B = 16;
+      const hours = durationSeconds / 3600;
+      const x = h => L + (Math.max(0, Math.min(hours, h)) / hours) * (W - L - R);
+      const y = p => T + (1 - p) * (H - T - B);
+      const pts = acq.cumulative || [];
+
+      let d = `M ${x(0)} ${y(0)}`;
+      let prev = 0;
+      pts.forEach(c => { d += ` L ${x(c.hours)} ${y(prev)} L ${x(c.hours)} ${y(c.p_image_by)}`; prev = c.p_image_by; });
+      d += ` L ${x(hours)} ${y(prev)}`;
+      const area = `${d} L ${x(hours)} ${y(0)} Z`;
+
+      let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Chance of at least one usable image over time">`;
+      svg += `<line class="axis" x1="${L}" y1="${y(0)}" x2="${W - R}" y2="${y(0)}"/>`;
+      svg += `<line class="axis" x1="${L}" y1="${y(0)}" x2="${L}" y2="${y(1)}"/>`;
+      svg += `<line class="half" x1="${L}" y1="${y(0.5)}" x2="${W - R}" y2="${y(0.5)}"/>`;
+      svg += `<text x="${L - 4}" y="${y(1) + 3}" text-anchor="end">100%</text>`;
+      svg += `<text x="${L - 4}" y="${y(0.5) + 3}" text-anchor="end">50%</text>`;
+      svg += `<text x="${L - 4}" y="${y(0) + 3}" text-anchor="end">0</text>`;
+      for (let h = 0; h <= hours; h += 24) svg += `<text x="${x(h)}" y="${H - 3}" text-anchor="middle">${h}h</text>`;
+      if (acq.hours_to_recommended !== null && acq.hours_to_recommended !== undefined) {
+        svg += `<line class="rec" x1="${x(acq.hours_to_recommended)}" y1="${y(0)}" x2="${x(acq.hours_to_recommended)}" y2="${y(1)}"/>`;
+      }
+      svg += `<path class="area" d="${area}"/><path class="step" d="${d}"/>`;
+      pts.forEach((c, i) => {
+        const pass = passes.find(p => p.pass_id === c.pass_id);
+        const label = `T+${c.hours.toFixed(1)}h: ${pct(c.p_image_by)} chance of an image by then` + (pass ? ` (${pass.satellite})` : '');
+        svg += `<circle class="pt" data-i="${i}" cx="${x(c.hours)}" cy="${y(c.p_image_by)}" r="3.5"><title>${label}</title></circle>`;
+      });
+      svg += `</svg>`;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'chart';
+      wrap.innerHTML = `<div class="acq-label">Chance of at least one usable image, by hour</div>${svg}`;
+      wrap.querySelectorAll('.pt').forEach(el => {
+        el.addEventListener('click', () => {
+          const c = pts[Number(el.dataset.i)];
+          const pass = passes.find(p => p.pass_id === c.pass_id);
+          if (pass) jumpTo(pass);
+        });
+      });
+      return wrap;
     }
 
     // The headline answer: how soon is a usable image likely?
     function renderAcquisition(target) {
-      const panel = document.getElementById('acq');
+      const panel = $('acq');
       const acq = target.acquisition;
       if (!acq) { panel.style.display = 'none'; return; }
       panel.style.display = 'block';
@@ -323,24 +538,65 @@
         panel.className = 'none';
         panel.innerHTML = `<div class="acq-label">Time to usable image</div>
           <div class="acq-head">No usable pass in ${horizon} h</div>${stats}`;
+        panel.appendChild(renderChart(acq, target.passes || []));
         return;
       }
       panel.className = acq.recommended_reason === 'earliest good pass' ? '' : 'none';
       const label = acq.recommended_reason === 'earliest good pass'
         ? 'First likely clear image' : 'Best available (no good pass)';
       panel.innerHTML = `<div class="acq-label">${label} &middot; P(image) by</div>
-        <div class="acq-head"></div>${stats}
-        <button class="btn-jump">Jump to pass</button>`;
-      // textContent: satellite names come from the catalog, keep them inert
+        <div class="acq-head"></div>${stats}`;
       panel.querySelector('.acq-head').innerHTML =
         `<span class="sat"></span> &middot; ${fmtPeak(rec.peak_utc)} UTC &middot; <span class="eta">in ${fmtHours(acq.hours_to_recommended)}</span> &middot; ${pct(rec.scores.model)}`;
+      // textContent: satellite names come from the catalog, keep them inert
       panel.querySelector('.acq-head .sat').textContent = rec.satellite;
-      panel.querySelector('.btn-jump').onclick = () => jumpTo(rec);
+      panel.appendChild(renderChart(acq, target.passes || []));
+      const btn = document.createElement('button');
+      btn.className = 'btn-jump';
+      btn.textContent = 'Jump to pass';
+      btn.onclick = () => jumpTo(rec);
+      panel.appendChild(btn);
+    }
+
+    // ---------------------------------------------------------------- target
+    function drawTarget(target) {
+      targetEntities.forEach(e => viewer.entities.remove(e));
+      targetEntities = [];
+      const displayName = target.name || "Custom Target";
+      const label = {
+        text: displayName, font: "bold 14px 'Rajdhani'", fillColor: Cesium.Color.WHITE,
+        showBackground: true, backgroundColor: new Cesium.Color(0, 0.9, 1.0, 0.3),
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM, pixelOffset: new Cesium.Cartesian2(0, -15)
+      };
+
+      if (target.type === 'area' && target.aoi) {
+        const flat = [];
+        target.aoi.forEach(([la, lo]) => flat.push(lo, la));
+        targetEntities.push(viewer.entities.add({
+          polygon: {
+            hierarchy: Cesium.Cartesian3.fromDegreesArray(flat),
+            material: Cesium.Color.AQUA.withAlpha(0.18),
+            outline: true, outlineColor: Cesium.Color.AQUA, height: 0
+          }
+        }));
+        targetEntities.push(viewer.entities.add({
+          polyline: { positions: Cesium.Cartesian3.fromDegreesArray(flat.concat(flat.slice(0, 2))), width: 2, material: Cesium.Color.AQUA }
+        }));
+        // Corners plus centroid: enough for the gold swath highlight
+        activeSamples = target.aoi.map(([la, lo]) => ({ lat: la, lon: lo })).concat([{ lat: target.lat, lon: target.lon }]);
+      } else {
+        activeSamples = [{ lat: target.lat, lon: target.lon }];
+      }
+      targetEntities.push(viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 0),
+        point: { pixelSize: 8, color: Cesium.Color.WHITE, outlineColor: Cesium.Color.AQUA, outlineWidth: 3 },
+        label: label
+      }));
     }
 
     // The Reusable Rendering Engine
-    function renderContractData(contract) {
-        const tbody = document.getElementById('passes-body');
+    function renderContractData(contract, opts = {}) {
+        const tbody = $('passes-body');
         tbody.innerHTML = "";
 
         if (!contract.targets || contract.targets.length === 0) {
@@ -349,30 +605,22 @@
         }
 
         buildSatellites(contract);
+        renderTleBadge(contract);
 
         const target = contract.targets[0];
-        activeTarget = target;
         const displayName = target.name || "Custom Target";
-        document.getElementById('target-coords').innerText = `${displayName} | ${target.lat.toFixed(3)}°, ${target.lon.toFixed(3)}°`;
-        document.getElementById('in-lat').value = target.lat.toFixed(4);
-        document.getElementById('in-lon').value = target.lon.toFixed(4);
+        const kind = target.type === 'area' ? 'AREA · ' : '';
+        $('target-coords').innerText = `${kind}${displayName} | ${target.lat.toFixed(3)}°, ${target.lon.toFixed(3)}°`;
+        $('in-lat').value = target.lat.toFixed(4);
+        $('in-lon').value = target.lon.toFixed(4);
 
-        // Swap only the target marker; the orbits stay put
-        if (targetEntity) viewer.entities.remove(targetEntity);
-        targetEntity = viewer.entities.add({
-          position: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 0),
-          point: { pixelSize: 8, color: Cesium.Color.WHITE, outlineColor: Cesium.Color.AQUA, outlineWidth: 3 },
-          label: {
-            text: displayName, font: "bold 14px 'Rajdhani'", fillColor: Cesium.Color.WHITE,
-            showBackground: true, backgroundColor: new Cesium.Color(0, 0.9, 1.0, 0.3),
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM, pixelOffset: new Cesium.Cartesian2(0, -15)
-          }
-        });
-
-        viewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 3500000.0),
-          duration: 1.5
-        });
+        drawTarget(target);
+        if (opts.fly !== false) {
+          viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 3500000.0),
+            duration: 1.5
+          });
+        }
 
         renderAcquisition(target);
         const recId = target.acquisition ? target.acquisition.recommended_pass_id : null;
@@ -394,16 +642,19 @@
           }
 
           const isNight = pass.limited_by === 'night';
-          const scoreCell = isNight
+          const scoreMain = isNight
             ? `<span class="tag-note">night</span>`
             : `${(pass.scores.model * 100).toFixed(0)}`;
+          const notes = [];
+          if (pass.aoi_coverage_pct !== undefined) notes.push(`cov ${pass.aoi_coverage_pct}%`);
+          if (pass.limited_by && !isNight) notes.push(pass.limited_by);
           const row = document.createElement('tr');
           row.className = 'pass-row' + (pass.pass_id === recId ? ' rec' : '') + (isNight ? ' night' : '');
           row.innerHTML = `
             <td><span class="sat-tag" style="background:#fff"></span>${pass.imaging === false ? '<span class="lead">visual</span>' : ''}</td>
             <td style="color:#fff; font-size: 14px;">${fmtPeak(pass.peak_utc)}<span class="lead">T+${pass.lead_time_hours.toFixed(1)}h</span></td>
             <td style="color:${verdictColor}; text-shadow: 0 0 8px ${glowColor};">${pass.cloud_forecast_pct}%</td>
-            <td style="color:#fff;">${scoreCell}</td>
+            <td style="color:#fff;">${scoreMain}${notes.length ? `<span class="lead">${notes.join(' · ')}</span>` : ''}</td>
             <td><span class="btn-view">${pass.pass_id === recId ? 'Best' : 'Intercept'}</span></td>
           `;
           row.querySelector('.sat-tag').textContent = pass.satellite.substring(0, 8);
@@ -412,30 +663,58 @@
         });
     }
 
+    // ---------------------------------------------------------------- requests
+    async function readError(response) {
+      let detail = `HTTP ${response.status}`;
+      try {
+        const body = await response.json();
+        detail = typeof body.detail === 'string' ? body.detail
+          : (body.detail || []).map(d => `${(d.loc || []).slice(-1)[0]}: ${d.msg}`).join('; ') || detail;
+      } catch (_) { /* keep the status code */ }
+      return detail;
+    }
+
     // Initial Boot (loads the Blacksburg passes instantly)
     async function bootSystem() {
         const seq = ++requestSeq;
         try {
-            const response = await fetch('http://localhost:8000/api/passes');
+            const response = await fetch(`${API}/api/passes`);
             const contract = await response.json();
-            if (seq === requestSeq) renderContractData(contract);
+            if (seq !== requestSeq) return;
+            const t = contract.targets && contract.targets[0];
+            if (t) current = { lat: t.lat, lon: t.lon, name: t.name };
+            renderContractData(contract);
+            if (cloudsOn && current) loadClouds(current.lat, current.lon);
         } catch (error) {
             console.error("Boot failed:", error);
         }
     }
 
-    // Live retasking for any point: shared by globe clicks and typed coordinates
-    async function retask(lat, lon, name) {
+    // Live retasking for any point or area: shared by every way of choosing a target
+    async function retask(req, opts = {}) {
       const seq = ++requestSeq;
-      document.getElementById('coord-error').textContent = '';
+      current = req;
+      $('coord-error').textContent = '';
 
       // UI Loading State (orbits stay on the globe)
-      document.getElementById('target-coords').innerText = `CALCULATING OVERRIDE...`;
-      document.getElementById('acq').style.display = 'none';
-      document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#00e5ff;">Predicting Clear-Sky Windows...</td></tr>`;
+      $('target-coords').innerText = `CALCULATING OVERRIDE...`;
+      $('acq').style.display = 'none';
+      $('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#00e5ff;">Predicting Clear-Sky Windows...</td></tr>`;
 
-      let url = `http://localhost:8000/api/calculate?lat=${lat}&lon=${lon}`;
-      if (name) url += `&name=${encodeURIComponent(name)}`;
+      let url;
+      if (req.aoi) {
+        url = `${API}/api/calculate?aoi=${encodeURIComponent(req.aoi.map(p => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join(';'))}`;
+      } else {
+        url = `${API}/api/calculate?lat=${req.lat}&lon=${req.lon}`;
+      }
+      if (req.name) url += `&name=${encodeURIComponent(req.name)}`;
+      url += satsParam();
+
+      // The cloud grid loads in parallel, so it never delays the answer.
+      if (cloudsOn) {
+        const [clat, clon] = req.aoi ? centroidOf(req.aoi) : [req.lat, req.lon];
+        loadClouds(clat, clon);
+      }
 
       let response;
       try {
@@ -443,55 +722,202 @@
       } catch (error) {
           if (seq !== requestSeq) return;
           console.error("Live calculation failed:", error);
-          document.getElementById('target-coords').innerText = `OFFLINE`;
-          document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">Tasking Failed. API Unreachable.</td></tr>`;
+          $('target-coords').innerText = `OFFLINE`;
+          $('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">Tasking Failed. API Unreachable.</td></tr>`;
           return;
       }
       if (seq !== requestSeq) return;  // a newer request superseded this one
 
       if (!response.ok) {
-          // Show the backend's reason (bad input, catalog down) instead of
+          // Show the backend's reason (bad input, area too big) instead of
           // pretending the API is unreachable.
-          let detail = `HTTP ${response.status}`;
-          try {
-              const body = await response.json();
-              detail = typeof body.detail === 'string' ? body.detail
-                : (body.detail || []).map(d => `${(d.loc || []).slice(-1)[0]}: ${d.msg}`).join('; ') || detail;
-          } catch (_) { /* keep the status code */ }
+          const detail = await readError(response);
           if (seq !== requestSeq) return;
-          document.getElementById('target-coords').innerText = `REJECTED`;
-          document.getElementById('coord-error').textContent = detail;
-          document.getElementById('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">Tasking Rejected.</td></tr>`;
+          $('target-coords').innerText = `REJECTED`;
+          $('coord-error').textContent = detail;
+          $('passes-body').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color:#ff003c;">Tasking Rejected.</td></tr>`;
           return;
       }
       const contract = await response.json();
       if (seq !== requestSeq) return;
-      renderContractData(contract);
+      renderContractData(contract, opts);
     }
 
-    // Interactive Map Clicking
-    viewer.screenSpaceEventHandler.setInputAction(function(click) {
-      const ray = viewer.camera.getPickRay(click.position);
-      const intersection = viewer.scene.globe.pick(ray, viewer.scene);
-      if (!intersection) return;
+    // ------------------------------------------------------------ cloud overlay
+    let cloudsOn = false;
+    let cloudEntities = [];
+    let cloudGrid = null;
+    let cloudSeq = 0;
 
-      const cartographic = Cesium.Cartographic.fromCartesian(intersection);
-      const lat = Cesium.Math.toDegrees(cartographic.latitude);
-      const lon = Cesium.Math.toDegrees(cartographic.longitude);
-      document.getElementById('in-lat').value = lat.toFixed(4);
-      document.getElementById('in-lon').value = lon.toFixed(4);
-      document.getElementById('in-name').value = '';
-      retask(lat, lon, '');
+    function cloudHourIndex(time) {
+      if (!cloudGrid) return -1;
+      const ms = Cesium.JulianDate.toDate(time).getTime();
+      const i = Math.round((ms - cloudGrid.t0) / 3600000);
+      return Math.max(0, Math.min(cloudGrid.times.length - 1, i));
+    }
+
+    function clearClouds() {
+      cloudEntities.forEach(e => viewer.entities.remove(e));
+      cloudEntities = [];
+    }
+
+    async function loadClouds(lat, lon) {
+      const seq = ++cloudSeq;
+      let grid;
+      try {
+        const response = await fetch(`${API}/api/clouds?lat=${lat}&lon=${lon}`);
+        if (!response.ok) throw new Error(await readError(response));
+        grid = await response.json();
+      } catch (error) {
+        if (seq !== cloudSeq) return;
+        clearClouds();
+        $('cloud-time').textContent = 'unavailable';
+        console.warn('Cloud overlay unavailable:', error);
+        return;
+      }
+      if (seq !== cloudSeq || !cloudsOn) return;
+      clearClouds();
+      grid.t0 = Date.parse(grid.times[0]);
+      cloudGrid = grid;
+      const half = grid.step_deg / 2;
+      grid.lats.forEach((la, i) => {
+        const lo = grid.lons[i];
+        cloudEntities.push(viewer.entities.add({
+          rectangle: {
+            coordinates: Cesium.Rectangle.fromDegrees(lo - half, Math.max(-90, la - half), lo + half, Math.min(90, la + half)),
+            height: 0,
+            material: new Cesium.ColorMaterialProperty(new Cesium.CallbackProperty((time) => {
+              const t = cloudHourIndex(time);
+              const c = t < 0 ? null : cloudGrid.cover[t][i];
+              return Cesium.Color.WHITE.withAlpha(c === null || c === undefined ? 0 : (c / 100) * 0.75);
+            }, false))
+          }
+        }));
+      });
+    }
+
+    // Keep the legend's timestamp in step with the timeline
+    viewer.clock.onTick.addEventListener((clock) => {
+      if (!cloudsOn || !cloudGrid) return;
+      const t = cloudHourIndex(clock.currentTime);
+      const label = cloudGrid.times[t] ? `${fmtPeak(cloudGrid.times[t])} UTC` : '';
+      if ($('cloud-time').textContent !== label) $('cloud-time').textContent = label;
+    });
+
+    $('btn-clouds').addEventListener('click', () => {
+      cloudsOn = !cloudsOn;
+      $('btn-clouds').classList.toggle('on', cloudsOn);
+      $('cloud-legend').style.display = cloudsOn ? 'block' : 'none';
+      if (!cloudsOn) { cloudSeq++; clearClouds(); return; }
+      $('cloud-time').textContent = 'loading...';
+      if (current) {
+        const [la, lo] = current.aoi ? centroidOf(current.aoi) : [current.lat, current.lon];
+        loadClouds(la, lo);
+      }
+    });
+
+    // --------------------------------------------------------------- area draw
+    let drawMode = false;
+    let drawPts = [];
+    let drawPreview = null;
+    let drawMarkers = [];
+
+    function updateDrawUi() {
+      $('btn-draw').style.display = drawMode ? 'none' : '';
+      $('btn-finish').style.display = drawMode ? '' : 'none';
+      $('btn-cancel').style.display = drawMode ? '' : 'none';
+      $('btn-finish').textContent = `Finish (${drawPts.length})`;
+      $('btn-finish').disabled = drawPts.length < 3;
+      $('btn-finish').style.opacity = drawPts.length < 3 ? 0.5 : 1;
+      $('draw-hint').textContent = drawMode ? 'click corners · right-click to finish' : '';
+    }
+
+    function endDraw() {
+      drawMode = false;
+      drawPts = [];
+      if (drawPreview) viewer.entities.remove(drawPreview);
+      drawPreview = null;
+      drawMarkers.forEach(e => viewer.entities.remove(e));
+      drawMarkers = [];
+      updateDrawUi();
+    }
+
+    function finishDraw() {
+      if (drawPts.length < 3) {
+        $('coord-error').textContent = 'An area needs at least 3 corners.';
+        return;
+      }
+      const aoi = drawPts.slice();
+      const name = $('in-name').value.trim();
+      endDraw();
+      retask({ aoi, name });
+    }
+
+    $('btn-draw').addEventListener('click', () => {
+      drawMode = true;
+      drawPts = [];
+      $('coord-error').textContent = '';
+      drawPreview = viewer.entities.add({
+        polygon: {
+          hierarchy: new Cesium.CallbackProperty(() => new Cesium.PolygonHierarchy(
+            drawPts.map(([la, lo]) => Cesium.Cartesian3.fromDegrees(lo, la))), false),
+          material: Cesium.Color.YELLOW.withAlpha(0.2), height: 0
+        }
+      });
+      updateDrawUi();
+    });
+    $('btn-finish').addEventListener('click', finishDraw);
+    $('btn-cancel').addEventListener('click', endDraw);
+
+    function pickLatLon(position) {
+      const ray = viewer.camera.getPickRay(position);
+      const intersection = viewer.scene.globe.pick(ray, viewer.scene);
+      if (!intersection) return null;
+      const c = Cesium.Cartographic.fromCartesian(intersection);
+      return [Cesium.Math.toDegrees(c.latitude), Cesium.Math.toDegrees(c.longitude)];
+    }
+
+    // Interactive Map Clicking: a corner while drawing, otherwise a new point target
+    viewer.screenSpaceEventHandler.setInputAction(function(click) {
+      const ll = pickLatLon(click.position);
+      if (!ll) return;
+      const [lat, lon] = ll;
+      if (drawMode) {
+        drawPts.push([lat, lon]);
+        drawMarkers.push(viewer.entities.add({
+          position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
+          point: { pixelSize: 6, color: Cesium.Color.YELLOW }
+        }));
+        updateDrawUi();
+        return;
+      }
+      $('in-lat').value = lat.toFixed(4);
+      $('in-lon').value = lon.toFixed(4);
+      $('in-name').value = '';
+      retask({ lat, lon, name: '' });
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-    // Typed coordinates. Enter in any field submits (native form behavior).
-    document.getElementById('coord-form').addEventListener('submit', (e) => {
+    viewer.screenSpaceEventHandler.setInputAction(function() {
+      if (drawMode) finishDraw();
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    // ------------------------------------------------------ typed coordinates
+    function parsePair(text) {
+      const parts = text.split(/[\s,;]+/).filter(Boolean);
+      if (parts.length !== 2) return null;
+      const [a, b] = parts.map(Number);
+      if (!Number.isFinite(a) || !Number.isFinite(b) || a < -90 || a > 90 || b < -180 || b > 180) return null;
+      return [a, b];
+    }
+
+    // Enter in any field submits (native form behavior).
+    $('coord-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const latText = document.getElementById('in-lat').value.trim();
-      const lonText = document.getElementById('in-lon').value.trim();
+      const latText = $('in-lat').value.trim();
+      const lonText = $('in-lon').value.trim();
       const lat = Number(latText);
       const lon = Number(lonText);
-      const err = document.getElementById('coord-error');
+      const err = $('coord-error');
       if (latText === '' || !Number.isFinite(lat) || lat < -90 || lat > 90) {
         err.textContent = 'Latitude must be a number from -90 to 90.';
         return;
@@ -500,19 +926,102 @@
         err.textContent = 'Longitude must be a number from -180 to 180.';
         return;
       }
-      retask(lat, lon, document.getElementById('in-name').value.trim());
+      retask({ lat, lon, name: $('in-name').value.trim() });
     });
 
     // Pasting "37.2296, -80.4139" (as copied from a map) fills both fields.
-    document.getElementById('in-lat').addEventListener('paste', (e) => {
+    $('in-lat').addEventListener('paste', (e) => {
       const text = (e.clipboardData || window.clipboardData).getData('text');
-      const parts = text.split(/[\s,;]+/).filter(Boolean);
-      if (parts.length === 2 && parts.every(p => Number.isFinite(Number(p)))) {
+      const pair = parsePair(text);
+      if (pair) {
         e.preventDefault();
-        document.getElementById('in-lat').value = parts[0];
-        document.getElementById('in-lon').value = parts[1];
+        $('in-lat').value = pair[0];
+        $('in-lon').value = pair[1];
       }
     });
+
+    // ------------------------------------------------------------ place search
+    let searchTimer = null;
+    let searchSeq = 0;
+    let searchItems = [];
+    let searchActive = 0;
+
+    function closeSearch() {
+      $('search-results').style.display = 'none';
+      searchItems = [];
+    }
+
+    function chooseSearch(item) {
+      closeSearch();
+      $('search').value = item.label;
+      $('in-name').value = item.name || '';
+      retask({ lat: item.lat, lon: item.lon, name: item.name || '' });
+    }
+
+    function showSearch(items, emptyText) {
+      const box = $('search-results');
+      box.innerHTML = '';
+      searchItems = items;
+      searchActive = 0;
+      if (!items.length) {
+        box.innerHTML = `<div class="search-empty"></div>`;
+        box.firstChild.textContent = emptyText;
+      }
+      items.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'search-item' + (i === 0 ? ' active' : '');
+        el.innerHTML = `<span class="nm"></span> <small></small>`;
+        el.querySelector('.nm').textContent = item.title;
+        el.querySelector('small').textContent = item.sub;
+        el.addEventListener('mousedown', (e) => { e.preventDefault(); chooseSearch(item); });
+        box.appendChild(el);
+      });
+      box.style.display = 'block';
+    }
+
+    async function runSearch(q) {
+      const pair = parsePair(q);
+      if (pair) {
+        showSearch([{ title: `Go to ${pair[0]}, ${pair[1]}`, sub: 'coordinates', lat: pair[0], lon: pair[1], name: '', label: q }], '');
+        return;
+      }
+      if (q.length < 2) { closeSearch(); return; }
+      const seq = ++searchSeq;
+      let results = [];
+      try {
+        const response = await fetch(`${API}/api/geocode?q=${encodeURIComponent(q)}`);
+        if (response.ok) results = (await response.json()).results || [];
+      } catch (_) { /* treated as no results */ }
+      if (seq !== searchSeq) return;
+      showSearch(results.map(r => {
+        const where = [r.admin1, r.country].filter(Boolean).join(' · ');
+        const name = r.country ? `${r.name}, ${r.country}` : r.name;
+        return { title: r.name, sub: `${where} · ${r.lat.toFixed(2)}, ${r.lon.toFixed(2)}`, lat: r.lat, lon: r.lon, name, label: name };
+      }), 'No matching place');
+    }
+
+    $('search').addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      const q = $('search').value.trim();
+      searchTimer = setTimeout(() => runSearch(q), 300);
+    });
+    $('search').addEventListener('keydown', (e) => {
+      const items = $('search-results').querySelectorAll('.search-item');
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (!items.length) return;
+        e.preventDefault();
+        searchActive = (searchActive + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length;
+        items.forEach((el, i) => el.classList.toggle('active', i === searchActive));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (searchItems.length) { chooseSearch(searchItems[searchActive]); return; }
+        clearTimeout(searchTimer);
+        runSearch($('search').value.trim());
+      } else if (e.key === 'Escape') {
+        closeSearch();
+      }
+    });
+    $('search').addEventListener('blur', () => setTimeout(closeSearch, 150));
 
     bootSystem();
   </script>

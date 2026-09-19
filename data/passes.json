@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-19T19:37:57Z",
+  "generated_at": "2026-09-19T20:37:05Z",
   "horizon_hours": 72,
   "satellites": [
     {
@@ -7,85 +7,96 @@
       "swathKm": 185,
       "colorHex": "#f4c430",
       "tle1": "1 39084U 13008A   26261.89648279  .00000167  00000-0  47135-4 0  9994",
-      "tle2": "2 39084  98.2215 330.8764 0001324  94.5454 265.5896 14.57101203711548"
+      "tle2": "2 39084  98.2215 330.8764 0001324  94.5454 265.5896 14.57101203711548",
+      "norad_id": 39084,
+      "epoch_utc": "2026-09-18T21:30:56Z",
+      "tle_age_hours": 23.1
     },
     {
       "id": "LANDSAT 9",
       "swathKm": 185,
       "colorHex": "#ffa000",
       "tle1": "1 49260U 21088A   26261.10681602  .00000218  00000-0  58383-4 0  9993",
-      "tle2": "2 49260  98.2196 330.1185 0001510  98.4030 261.7339 14.57112776264532"
+      "tle2": "2 49260  98.2196 330.1185 0001510  98.4030 261.7339 14.57112776264532",
+      "norad_id": 49260,
+      "epoch_utc": "2026-09-18T02:33:48Z",
+      "tle_age_hours": 42.1
     },
     {
       "id": "SENTINEL 2A",
       "swathKm": 290,
       "colorHex": "#00ff00",
       "tle1": "1 40697U 15028A   26261.92095446 -.00000267  00000-0 -85121-4 0  9996",
-      "tle2": "2 40697  98.5664 335.4081 0001149  81.5153 278.6160 14.30815246587136"
+      "tle2": "2 40697  98.5664 335.4081 0001149  81.5153 278.6160 14.30815246587136",
+      "norad_id": 40697,
+      "epoch_utc": "2026-09-18T22:06:10Z",
+      "tle_age_hours": 22.5
     },
     {
       "id": "SENTINEL 2B",
       "swathKm": 290,
       "colorHex": "#00c853",
       "tle1": "1 42063U 17013A   26261.98371987 -.00000113  00000-0 -26324-4 0  9994",
-      "tle2": "2 42063  98.5709 335.4079 0001192  84.9535 275.1784 14.30814163498054"
+      "tle2": "2 42063  98.5709 335.4079 0001192  84.9535 275.1784 14.30814163498054",
+      "norad_id": 42063,
+      "epoch_utc": "2026-09-18T23:36:33Z",
+      "tle_age_hours": 21.0
     },
     {
       "id": "SENTINEL-2C",
       "swathKm": 290,
       "colorHex": "#69f0ae",
       "tle1": "1 60989U 24157A   26261.10960556  .00000059  00000-0  39227-4 0  9991",
-      "tle2": "2 60989  98.5719 334.5504 0001365  86.1913 273.9426 14.30814144106279"
+      "tle2": "2 60989  98.5719 334.5504 0001365  86.1913 273.9426 14.30814144106279",
+      "norad_id": 60989,
+      "epoch_utc": "2026-09-18T02:37:49Z",
+      "tle_age_hours": 42.0
     },
     {
       "id": "TERRA",
       "swathKm": 2330,
       "colorHex": "#00e5ff",
       "tle1": "1 25994U 99068A   26261.91680867  .00000195  00000-0  48613-4 0  9994",
-      "tle2": "2 25994  97.9363 307.7047 0001086 322.7432 161.2948 14.61162050423291"
+      "tle2": "2 25994  97.9363 307.7047 0001086 322.7432 161.2948 14.61162050423291",
+      "norad_id": 25994,
+      "epoch_utc": "2026-09-18T22:00:12Z",
+      "tle_age_hours": 22.6
     },
     {
       "id": "AQUA",
       "swathKm": 2330,
       "colorHex": "#2979ff",
       "tle1": "1 27424U 02022A   26261.93620890  .00000520  00000-0  11315-3 0  9990",
-      "tle2": "2 27424  98.4398 233.1462 0001504  65.9006 321.0629 14.62205809296972"
+      "tle2": "2 27424  98.4398 233.1462 0001504  65.9006 321.0629 14.62205809296972",
+      "norad_id": 27424,
+      "epoch_utc": "2026-09-18T22:28:08Z",
+      "tle_age_hours": 22.1
     },
     {
       "id": "ISS (ZARYA)",
       "swathKm": 1200,
       "colorHex": "#ff3333",
       "tle1": "1 25544U 98067A   26261.78789299  .00005868  00000-0  11393-3 0  9993",
-      "tle2": "2 25544  51.6308 196.8438 0004827 155.1807 204.9414 15.49168087586262"
+      "tle2": "2 25544  51.6308 196.8438 0004827 155.1807 204.9414 15.49168087586262",
+      "norad_id": 25544,
+      "epoch_utc": "2026-09-18T18:54:33Z",
+      "tle_age_hours": 25.7
     }
   ],
+  "tle_age": {
+    "max_hours": 42.1,
+    "min_hours": 21.0,
+    "status": "fresh"
+  },
+  "filtered_satellites": null,
   "targets": [
     {
       "id": "blacksburg",
       "name": "Blacksburg, VA",
+      "type": "point",
       "lat": 37.2296,
       "lon": -80.4139,
       "passes": [
-        {
-          "pass_id": "blacksburg-27424-20260919T1950",
-          "satellite": "AQUA",
-          "norad_id": 27424,
-          "start_utc": "2026-09-19T19:50:31Z",
-          "peak_utc": "2026-09-19T19:52:47Z",
-          "end_utc": "2026-09-19T19:55:03Z",
-          "duration_s": 272,
-          "max_elevation_deg": 30.1,
-          "lead_time_hours": 0.2,
-          "cloud_forecast_pct": 21,
-          "scores": {
-            "model": 0.7833,
-            "forecast_only": 0.79,
-            "climatology": 0.4069
-          },
-          "verdict": "good",
-          "limited_by": null,
-          "imaging": true
-        },
         {
           "pass_id": "blacksburg-27424-20260919T2128",
           "satellite": "AQUA",
@@ -95,7 +106,7 @@
           "end_utc": "2026-09-19T21:31:44Z",
           "duration_s": 193,
           "max_elevation_deg": 24.0,
-          "lead_time_hours": 1.8,
+          "lead_time_hours": 0.9,
           "cloud_forecast_pct": 4,
           "scores": {
             "model": 0.784,
@@ -115,7 +126,7 @@
           "end_utc": "2026-09-20T01:36:13Z",
           "duration_s": 392,
           "max_elevation_deg": 82.3,
-          "lead_time_hours": 5.9,
+          "lead_time_hours": 4.9,
           "cloud_forecast_pct": 9,
           "scores": {
             "model": 0.0,
@@ -135,7 +146,7 @@
           "end_utc": "2026-09-20T03:32:15Z",
           "duration_s": 441,
           "max_elevation_deg": 84.6,
-          "lead_time_hours": 7.8,
+          "lead_time_hours": 6.8,
           "cloud_forecast_pct": 78,
           "scores": {
             "model": 0.0,
@@ -155,7 +166,7 @@
           "end_utc": "2026-09-20T04:01:34Z",
           "duration_s": 247,
           "max_elevation_deg": 51.9,
-          "lead_time_hours": 8.3,
+          "lead_time_hours": 7.3,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
@@ -175,7 +186,7 @@
           "end_utc": "2026-09-20T09:32:17Z",
           "duration_s": 390,
           "max_elevation_deg": 89.5,
-          "lead_time_hours": 13.8,
+          "lead_time_hours": 12.8,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
@@ -195,7 +206,7 @@
           "end_utc": "2026-09-20T13:33:59Z",
           "duration_s": 198,
           "max_elevation_deg": 24.2,
-          "lead_time_hours": 17.9,
+          "lead_time_hours": 16.9,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0222,
@@ -215,7 +226,7 @@
           "end_utc": "2026-09-20T15:12:05Z",
           "duration_s": 273,
           "max_elevation_deg": 30.0,
-          "lead_time_hours": 19.5,
+          "lead_time_hours": 18.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0222,
@@ -235,15 +246,15 @@
           "end_utc": "2026-09-20T20:33:29Z",
           "duration_s": 387,
           "max_elevation_deg": 76.0,
-          "lead_time_hours": 24.8,
+          "lead_time_hours": 23.8,
           "cloud_forecast_pct": 4,
           "scores": {
-            "model": 0.6885,
+            "model": 0.784,
             "forecast_only": 0.96,
             "climatology": 0.4069
           },
-          "verdict": "marginal",
-          "limited_by": "clouds",
+          "verdict": "good",
+          "limited_by": null,
           "imaging": true
         },
         {
@@ -255,7 +266,7 @@
           "end_utc": "2026-09-20T20:43:06Z",
           "duration_s": 247,
           "max_elevation_deg": 49.2,
-          "lead_time_hours": 25.0,
+          "lead_time_hours": 24.0,
           "cloud_forecast_pct": 4,
           "scores": {
             "model": 0.6885,
@@ -272,10 +283,10 @@
           "norad_id": 25994,
           "start_utc": "2026-09-21T02:09:01Z",
           "peak_utc": "2026-09-21T02:11:42Z",
-          "end_utc": "2026-09-21T02:14:25Z",
-          "duration_s": 324,
+          "end_utc": "2026-09-21T02:14:24Z",
+          "duration_s": 323,
           "max_elevation_deg": 37.0,
-          "lead_time_hours": 30.5,
+          "lead_time_hours": 29.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
@@ -295,7 +306,7 @@
           "end_utc": "2026-09-21T03:14:07Z",
           "duration_s": 263,
           "max_elevation_deg": 82.8,
-          "lead_time_hours": 31.5,
+          "lead_time_hours": 30.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
@@ -315,7 +326,7 @@
           "end_utc": "2026-09-21T10:09:08Z",
           "duration_s": 310,
           "max_elevation_deg": 35.2,
-          "lead_time_hours": 38.4,
+          "lead_time_hours": 37.4,
           "cloud_forecast_pct": 79,
           "scores": {
             "model": 0.0,
@@ -335,7 +346,7 @@
           "end_utc": "2026-09-21T14:14:24Z",
           "duration_s": 384,
           "max_elevation_deg": 63.9,
-          "lead_time_hours": 42.5,
+          "lead_time_hours": 41.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0696,
@@ -355,7 +366,7 @@
           "end_utc": "2026-09-21T16:16:57Z",
           "duration_s": 440,
           "max_elevation_deg": 81.6,
-          "lead_time_hours": 44.5,
+          "lead_time_hours": 43.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0696,
@@ -375,10 +386,10 @@
           "end_utc": "2026-09-21T19:55:36Z",
           "duration_s": 265,
           "max_elevation_deg": 89.1,
-          "lead_time_hours": 48.2,
+          "lead_time_hours": 47.2,
           "cloud_forecast_pct": 100,
           "scores": {
-            "model": 0.0812,
+            "model": 0.0696,
             "forecast_only": 0.0,
             "climatology": 0.4069
           },
@@ -395,7 +406,7 @@
           "end_utc": "2026-09-21T21:10:46Z",
           "duration_s": 340,
           "max_elevation_deg": 41.4,
-          "lead_time_hours": 49.5,
+          "lead_time_hours": 48.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0812,
@@ -415,7 +426,7 @@
           "end_utc": "2026-09-22T01:15:57Z",
           "duration_s": 362,
           "max_elevation_deg": 49.7,
-          "lead_time_hours": 53.5,
+          "lead_time_hours": 52.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
@@ -435,7 +446,7 @@
           "end_utc": "2026-09-22T02:26:16Z",
           "duration_s": 240,
           "max_elevation_deg": 45.6,
-          "lead_time_hours": 54.7,
+          "lead_time_hours": 53.8,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
@@ -455,7 +466,7 @@
           "end_utc": "2026-09-22T03:12:08Z",
           "duration_s": 398,
           "max_elevation_deg": 89.9,
-          "lead_time_hours": 55.5,
+          "lead_time_hours": 54.5,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
@@ -475,7 +486,7 @@
           "end_utc": "2026-09-22T03:32:29Z",
           "duration_s": 441,
           "max_elevation_deg": 84.6,
-          "lead_time_hours": 55.8,
+          "lead_time_hours": 54.8,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
@@ -495,7 +506,7 @@
           "end_utc": "2026-09-22T09:09:58Z",
           "duration_s": 365,
           "max_elevation_deg": 51.3,
-          "lead_time_hours": 61.4,
+          "lead_time_hours": 60.4,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0,
@@ -515,7 +526,7 @@
           "end_utc": "2026-09-22T14:52:50Z",
           "duration_s": 358,
           "max_elevation_deg": 48.2,
-          "lead_time_hours": 67.1,
+          "lead_time_hours": 66.2,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0812,
@@ -535,7 +546,7 @@
           "end_utc": "2026-09-22T16:02:32Z",
           "duration_s": 399,
           "max_elevation_deg": 89.7,
-          "lead_time_hours": 68.3,
+          "lead_time_hours": 67.3,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0812,
@@ -555,7 +566,7 @@
           "end_utc": "2026-09-22T16:26:39Z",
           "duration_s": 439,
           "max_elevation_deg": 81.0,
-          "lead_time_hours": 68.7,
+          "lead_time_hours": 67.7,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0812,
@@ -575,7 +586,7 @@
           "end_utc": "2026-09-22T19:07:50Z",
           "duration_s": 244,
           "max_elevation_deg": 47.9,
-          "lead_time_hours": 71.4,
+          "lead_time_hours": 70.4,
           "cloud_forecast_pct": 100,
           "scores": {
             "model": 0.0812,
@@ -585,89 +596,115 @@
           "verdict": "bad",
           "limited_by": "clouds",
           "imaging": false
+        },
+        {
+          "pass_id": "blacksburg-27424-20260922T2005",
+          "satellite": "AQUA",
+          "norad_id": 27424,
+          "start_utc": "2026-09-22T20:05:24Z",
+          "peak_utc": "2026-09-22T20:08:14Z",
+          "end_utc": "2026-09-22T20:11:06Z",
+          "duration_s": 342,
+          "max_elevation_deg": 43.0,
+          "lead_time_hours": 71.5,
+          "cloud_forecast_pct": 100,
+          "scores": {
+            "model": 0.0812,
+            "forecast_only": 0.0,
+            "climatology": 0.4069
+          },
+          "verdict": "bad",
+          "limited_by": "clouds",
+          "imaging": true
         }
       ],
       "acquisition": {
-        "recommended_pass_id": "blacksburg-27424-20260919T1950",
+        "recommended_pass_id": "blacksburg-27424-20260920T2027",
         "recommended_reason": "earliest good pass",
-        "hours_to_recommended": 0.2,
-        "p_image_24h": 0.7888,
-        "p_image_48h": 0.9388,
-        "p_image_horizon": 0.9483,
-        "median_hours_to_image": 0.2,
+        "hours_to_recommended": 23.9,
+        "p_image_24h": 0.9544,
+        "p_image_48h": 0.9576,
+        "p_image_horizon": 0.9671,
+        "median_hours_to_image": 0.9,
         "weather_window_min": 180,
         "cumulative": [
           {
-            "pass_id": "blacksburg-27424-20260919T1950",
-            "peak_utc": "2026-09-19T19:52:47Z",
-            "hours": 0.2,
+            "pass_id": "blacksburg-27424-20260919T2128",
+            "peak_utc": "2026-09-19T21:30:07Z",
+            "hours": 0.9,
             "p_image_by": 0.784
           },
           {
             "pass_id": "blacksburg-25994-20260920T0129",
             "peak_utc": "2026-09-20T01:32:56Z",
-            "hours": 5.9,
+            "hours": 4.9,
             "p_image_by": 0.784
           },
           {
             "pass_id": "blacksburg-27424-20260920T0925",
             "peak_utc": "2026-09-20T09:29:03Z",
-            "hours": 13.9,
+            "hours": 12.9,
             "p_image_by": 0.784
           },
           {
             "pass_id": "blacksburg-25994-20260920T1330",
             "peak_utc": "2026-09-20T13:32:21Z",
-            "hours": 17.9,
+            "hours": 16.9,
             "p_image_by": 0.7888
           },
           {
             "pass_id": "blacksburg-27424-20260920T2027",
             "peak_utc": "2026-09-20T20:30:15Z",
-            "hours": 24.9,
-            "p_image_by": 0.9342
+            "hours": 23.9,
+            "p_image_by": 0.9544
           },
           {
             "pass_id": "blacksburg-25994-20260921T0209",
             "peak_utc": "2026-09-21T02:11:42Z",
-            "hours": 30.6,
-            "p_image_by": 0.9342
+            "hours": 29.6,
+            "p_image_by": 0.9544
           },
           {
             "pass_id": "blacksburg-27424-20260921T1003",
             "peak_utc": "2026-09-21T10:06:33Z",
-            "hours": 38.5,
-            "p_image_by": 0.9342
+            "hours": 37.5,
+            "p_image_by": 0.9544
           },
           {
             "pass_id": "blacksburg-25994-20260921T1408",
             "peak_utc": "2026-09-21T14:11:12Z",
-            "hours": 42.6,
-            "p_image_by": 0.9388
+            "hours": 41.6,
+            "p_image_by": 0.9576
           },
           {
             "pass_id": "blacksburg-27424-20260921T2105",
             "peak_utc": "2026-09-21T21:07:55Z",
-            "hours": 49.5,
-            "p_image_by": 0.9438
+            "hours": 48.5,
+            "p_image_by": 0.961
           },
           {
             "pass_id": "blacksburg-25994-20260922T0109",
             "peak_utc": "2026-09-22T01:12:56Z",
-            "hours": 53.6,
-            "p_image_by": 0.9438
+            "hours": 52.6,
+            "p_image_by": 0.961
           },
           {
             "pass_id": "blacksburg-27424-20260922T0903",
             "peak_utc": "2026-09-22T09:06:56Z",
-            "hours": 61.5,
-            "p_image_by": 0.9438
+            "hours": 60.5,
+            "p_image_by": 0.961
           },
           {
             "pass_id": "blacksburg-25994-20260922T1446",
             "peak_utc": "2026-09-22T14:49:51Z",
-            "hours": 67.2,
-            "p_image_by": 0.9483
+            "hours": 66.2,
+            "p_image_by": 0.9642
+          },
+          {
+            "pass_id": "blacksburg-27424-20260922T2005",
+            "peak_utc": "2026-09-22T20:08:14Z",
+            "hours": 71.5,
+            "p_image_by": 0.9671
           }
         ]
       }

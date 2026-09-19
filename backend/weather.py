@@ -65,6 +65,97 @@ def live_forecast(lat, lon):
     return forecast
 
 
+# lowercase query -> (monotonic time fetched, results)
+_GEOCODE_CACHE = {}
+
+
+def geocode(query):
+    """Place-name search via Open-Meteo geocoding. [] on no match or failure.
+
+    Each result: {name, admin1, country, lat, lon}. admin1 is the state or
+    region, so "Paris" can be told apart from Paris, Texas.
+    """
+    key = query.strip().lower()
+    if not key:
+        return []
+    hit = _GEOCODE_CACHE.get(key)
+    if hit and time.monotonic() - hit[0] < config.GEOCODE_TTL_S:
+        return hit[1]
+    try:
+        data = _get_json(
+            config.GEOCODE_URL,
+            {"name": query.strip(), "count": 5, "language": "en", "format": "json"},
+            timeout=config.LIVE_WEATHER_TIMEOUT_S,
+        )
+    except (OSError, ValueError):
+        return []
+    results = [
+        {
+            "name": r["name"],
+            "admin1": r.get("admin1"),
+            "country": r.get("country"),
+            "lat": r["latitude"],
+            "lon": r["longitude"],
+        }
+        for r in data.get("results", [])
+    ]
+    _GEOCODE_CACHE[key] = (time.monotonic(), results)
+    return results
+
+
+# (rounded lat, rounded lon) -> (monotonic time fetched, grid dict)
+_GRID_CACHE = {}
+
+
+def cloud_grid(lat, lon):
+    """Hourly forecast cloud cover on a grid around a point, for the overlay.
+
+    One multi-location Open-Meteo call. Returns
+    {lats, lons, step_deg, times, cover} where cover[t][i] is the cloud percent
+    at time t for grid point i (lats[i], lons[i]), or None if Open-Meteo is
+    slow or down. Never written to disk.
+    """
+    key = (round(lat, 1), round(lon, 1))
+    hit = _GRID_CACHE.get(key)
+    if hit and time.monotonic() - hit[0] < config.LIVE_WEATHER_TTL_S:
+        return hit[1]
+
+    n = config.CLOUD_GRID_N
+    step = config.CLOUD_GRID_SPAN_DEG / (n - 1)
+    half = config.CLOUD_GRID_SPAN_DEG / 2
+    lats, lons = [], []
+    for r in range(n):
+        for c in range(n):
+            glat = max(-89.5, min(89.5, lat - half + r * step))
+            glon = ((lon - half + c * step + 180) % 360) - 180
+            lats.append(round(glat, 3))
+            lons.append(round(glon, 3))
+    try:
+        data = _get_json(
+            config.FORECAST_URL,
+            {
+                "latitude": ",".join(map(str, lats)),
+                "longitude": ",".join(map(str, lons)),
+                "hourly": "cloud_cover",
+                "forecast_days": 4,
+                "timezone": "UTC",
+            },
+            timeout=config.LIVE_WEATHER_TIMEOUT_S * 2,
+        )
+        if isinstance(data, dict):  # a single location comes back unwrapped
+            data = [data]
+        times = [f"{t}:00Z" for t in data[0]["hourly"]["time"]]
+        per_point = [d["hourly"]["cloud_cover"] for d in data]
+        cover = [
+            [per_point[i][t] for i in range(len(per_point))] for t in range(len(times))
+        ]
+    except (OSError, ValueError, KeyError, IndexError):
+        return None
+    grid = {"lats": lats, "lons": lons, "step_deg": round(step, 4), "times": times, "cover": cover}
+    _GRID_CACHE[key] = (time.monotonic(), grid)
+    return grid
+
+
 _CLIM_TABLE = None
 _CLIM_CACHE = {}  # (lat 0.1deg, lon 0.1deg, month) -> clear rate
 

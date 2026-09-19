@@ -119,6 +119,10 @@ Earth-observation satellite passes will actually produce a usable image of this 
 | --- | --- | --- |
 | `GET /api/passes` | Precomputed Blacksburg file, for instant page load; recomputed in memory once over an hour old | ~5 ms |
 | `GET /api/calculate?lat=&lon=&name=` | Live computation for any point on the globe | ~2 s new point, ~0.2 s repeat |
+| `GET /api/calculate?aoi=lat,lon;lat,lon;…` | Same, for an area (polygon) instead of a point | ~1–2 s |
+| `…&sats=39084,49260` | Only these satellites (NORAD IDs) produce passes | |
+| `GET /api/geocode?q=` | Place-name search, up to 5 matches | ~0.3 s |
+| `GET /api/clouds?lat=&lon=` | Hourly forecast cloud cover on a 7×7 grid (1° cells) around a point, for the globe overlay | ~1.5 s, then cached 30 min |
 | `GET /api/health` | Liveness, file age, pass count | |
 
 A pass counts only if it is **above 20°**, the satellite's **sensor swath covers the point**,
@@ -155,6 +159,26 @@ peaking within **3 hours** of each other form one weather window, which succeeds
 pass's probability. Windows are then treated as independent, so `p_image_*` is somewhat
 optimistic when cloud patterns persist for days. `recommended_pass_id` and
 `hours_to_recommended` do not depend on that assumption.
+
+### Areas, satellite filter and orbit-data age
+
+**Areas (AOI = area of interest).** Pass `aoi` as a polygon of 3–20 corners, at most 600 km
+across. Beyond that, one cloud forecast at the centroid can't honestly speak for the whole
+region. The backend spreads sample points inside the polygon and walks every satellite's
+ground track: a pass is any stretch where the sensor swath touches at least one sample.
+Each pass then reports `aoi_coverage_pct`, the share of the area it images. A pass imaging
+**less than half** the area is at most `marginal` (`limited_by: "coverage"`) and doesn't
+count toward time-to-image. A sliver of the area isn't the picture you asked for. Ground tracks
+come straight from SGP4 with an Earth-rotation formula, not Skyfield's full conversion.
+That keeps a 72 h area search at ~0.25 s, and positions within 0.7 km of Skyfield's.
+
+**Satellite filter.** `sats` limits which satellites produce passes and the time-to-image
+numbers. `satellites[]` in the response still lists all of them so the globe can draw them.
+
+**Orbit-data age.** Every `satellites[]` entry carries `epoch_utc` and `tle_age_hours`, and
+the document has `tle_age: {max_hours, min_hours, status}`. The status is `fresh` under
+3 days, `stale` under 7 and `old` beyond that; SGP4 predictions drift by kilometers after
+about a week. The age comes from the saved catalog; refresh it with `tools/spacetrack_gp.py`.
 
 ### How the model was trained and tested
 
@@ -201,8 +225,9 @@ What those numbers do and don't say:
 Orbital data in this repository comes from [Space-Track.org](https://www.space-track.org),
 provided by United States Space Command (USSPACECOM) and the 18th Space Defense Squadron.
 
-Cloud forecasts and the historical archive used for training come from
-[Open-Meteo](https://open-meteo.com), free for non-commercial use under CC BY 4.0.
+Cloud forecasts, the historical archive used for training, and place-name search
+(geocoding, which uses GeoNames data) come from [Open-Meteo](https://open-meteo.com), free
+for non-commercial use under CC BY 4.0.
 
 `gp_catalog.json` and `sats.tle` are committed here as a point-in-time snapshot.
 Redistribution is permitted under USSPACECOM's standing grant:

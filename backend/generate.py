@@ -17,7 +17,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
-from . import acquisition, catalog, config, passes, scoring, solar, weather
+from . import acquisition, aoi as aoi_mod, catalog, config, passes, scoring, solar, weather
 
 
 def _pass_id(target_id, norad_id, start_dt):
@@ -28,20 +28,54 @@ def _slug(text):
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "target"
 
 
-def build_document(lat, lon, target_name, target_id, targets, clouds, now=None):
+def _point_name(lat, lon):
+    return (
+        f"{abs(lat):.4f}°{'N' if lat >= 0 else 'S'}, "
+        f"{abs(lon):.4f}°{'E' if lon >= 0 else 'W'}"
+    )
+
+
+def _tle_age_hours(epoch, now):
+    """Hours between a catalog EPOCH ("2026-09-18T21:30:56.113056", UTC) and now."""
+    if not epoch:
+        return None
+    made = datetime.fromisoformat(epoch).replace(tzinfo=timezone.utc)
+    return round((now - made).total_seconds() / 3600.0, 1)
+
+
+def _tle_status(max_hours):
+    if max_hours is None:
+        return "unknown"
+    if max_hours < config.TLE_STALE_HOURS:
+        return "fresh"
+    return "stale" if max_hours < config.TLE_OLD_HOURS else "old"
+
+
+def build_document(
+    lat, lon, target_name, target_id, targets, clouds, now=None, aoi=None, sat_ids=None
+):
     """The shared core: SGP4 passes, footprint filter, weather, ML scoring.
 
     `clouds` is a weather.CloudLookup, or None when no forecast is available;
     every pass then falls back to climatology rather than failing.
+    `aoi` is a polygon [(lat, lon), ...] for an area target, in which case
+    lat/lon should be its centroid. `sat_ids` restricts which satellites
+    produce passes; `satellites` in the document still lists all of them.
     Returns (doc, stats).
     """
     now = now or datetime.now(timezone.utc).replace(microsecond=0)
+    active = [t for t in targets if sat_ids is None or t["norad_id"] in sat_ids]
 
-    raw = passes.compute_passes(targets, lat=lat, lon=lon, start=now)
-
-    visible_count = len(raw)
-    if config.FOOTPRINT_FILTER:
-        raw = [p for p in raw if p["covers_target"]]
+    if aoi:
+        raw = passes.compute_area_passes(
+            active, aoi_mod.sample_points(aoi), (lat, lon), start=now
+        )
+        visible_count = len(raw)
+    else:
+        raw = passes.compute_passes(active, lat=lat, lon=lon, start=now)
+        visible_count = len(raw)
+        if config.FOOTPRINT_FILTER:
+            raw = [p for p in raw if p["covers_target"]]
 
     out_passes = []
     missing_cloud = 0
@@ -68,9 +102,10 @@ def build_document(lat, lon, target_name, target_id, targets, clouds, now=None):
             lon=lon,
             clim=clim,
             forecast_available=forecast_available,
+            coverage=p["aoi_coverage_pct"] / 100.0 if aoi else None,
         )
 
-        out_passes.append(
+        row = (
             {
                 "pass_id": _pass_id(target_id, p["norad_id"], p["start_dt"]),
                 "satellite": p["satellite"],
@@ -88,6 +123,9 @@ def build_document(lat, lon, target_name, target_id, targets, clouds, now=None):
                 "imaging": config.SATELLITE_META[p["satellite"]]["imaging"],
             }
         )
+        if aoi:
+            row["aoi_coverage_pct"] = p["aoi_coverage_pct"]
+        out_passes.append(row)
 
     # The frontend's globe iterates this array to draw each satellite, its
     # orbit path and its ground swath. Every satellite is listed even if it
@@ -99,24 +137,38 @@ def build_document(lat, lon, target_name, target_id, targets, clouds, now=None):
             "colorHex": config.SATELLITE_META[t["name"]]["color_hex"],
             "tle1": t["tle_line1"],
             "tle2": t["tle_line2"],
+            "norad_id": t["norad_id"],
+            "epoch_utc": (t.get("epoch") or "")[:19] + "Z" if t.get("epoch") else None,
+            "tle_age_hours": _tle_age_hours(t.get("epoch"), now),
         }
         for t in targets
     ]
+    ages = [s["tle_age_hours"] for s in satellites if s["tle_age_hours"] is not None]
+    max_age = max(ages) if ages else None
+
+    target = {
+        "id": target_id,
+        "name": target_name,
+        "type": "area" if aoi else "point",
+        "lat": float(lat),
+        "lon": float(lon),
+        "passes": out_passes,
+        "acquisition": acquisition.plan(out_passes, now),
+    }
+    if aoi:
+        target["aoi"] = [[round(a, 5), round(b, 5)] for a, b in aoi]
 
     doc = {
         "generated_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "horizon_hours": config.HORIZON_HOURS,
         "satellites": satellites,
-        "targets": [
-            {
-                "id": target_id,
-                "name": target_name,
-                "lat": float(lat),
-                "lon": float(lon),
-                "passes": out_passes,
-                "acquisition": acquisition.plan(out_passes, now),
-            }
-        ],
+        "tle_age": {
+            "max_hours": max_age,
+            "min_hours": min(ages) if ages else None,
+            "status": _tle_status(max_age),
+        },
+        "filtered_satellites": sorted(sat_ids) if sat_ids is not None else None,
+        "targets": [target],
     }
     stats = {
         "missing_cloud": missing_cloud,
@@ -127,7 +179,8 @@ def build_document(lat, lon, target_name, target_id, targets, clouds, now=None):
 
 
 def compute_passes_for_target(
-    lat, lon, target_name=None, *, target_id=None, targets=None, now=None, stats=None
+    lat, lon, target_name=None, *, target_id=None, targets=None, now=None, stats=None,
+    aoi=None, sat_ids=None,
 ):
     """Live computation for an arbitrary point. Same schema as passes.json.
 
@@ -136,10 +189,14 @@ def compute_passes_for_target(
     is fetched live from Open-Meteo (cached per ~1 km for 30 minutes) and
     never written to disk. Pass a dict as `stats` to receive run details,
     including stats["weather"] = "live" or "climatology-fallback".
+
+    For an area target pass `aoi` (a parsed polygon); lat/lon are then
+    ignored and the weather is taken at the area's centroid.
     """
+    if aoi:
+        lat, lon = aoi_mod.centroid(aoi)
     target_name = target_name or (
-        f"{abs(lat):.4f}°{'N' if lat >= 0 else 'S'}, "
-        f"{abs(lon):.4f}°{'E' if lon >= 0 else 'W'}"
+        f"Area around {_point_name(lat, lon)}" if aoi else _point_name(lat, lon)
     )
     if targets is None:
         targets = catalog.load_targets()
@@ -157,7 +214,8 @@ def compute_passes_for_target(
     clouds = weather.CloudLookup(forecast) if forecast else None
 
     doc, run_stats = build_document(
-        lat, lon, target_name, target_id or _slug(target_name), targets, clouds, now=now
+        lat, lon, target_name, target_id or _slug(target_name), targets, clouds,
+        now=now, aoi=aoi, sat_ids=sat_ids,
     )
     if stats is not None:
         stats.update(run_stats)

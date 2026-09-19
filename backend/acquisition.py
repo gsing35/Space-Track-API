@@ -31,7 +31,12 @@ def _parse(stamp):
 
 
 def _is_imaging(p):
-    return config.SATELLITE_META.get(p["satellite"], {}).get("imaging", True)
+    """Counts toward time-to-image: an imaging satellite that, for an area
+    target, images at least AOI_GOOD_COVERAGE of it. A sliver is not the image."""
+    if not config.SATELLITE_META.get(p["satellite"], {}).get("imaging", True):
+        return False
+    cov = p.get("aoi_coverage_pct")
+    return cov is None or cov >= config.AOI_GOOD_COVERAGE * 100
 
 
 def _windows(passes):

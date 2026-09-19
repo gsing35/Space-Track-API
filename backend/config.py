@@ -67,6 +67,18 @@ FOOTPRINT_FILTER = True
 # ones. Only satellites with "imaging": True above count toward it.
 WEATHER_WINDOW_MIN = 180
 
+# Area targets (AOI = area of interest). One cloud forecast at the centroid
+# stands in for the whole area, which stops being honest past a few hundred km.
+AOI_MAX_VERTICES = 20
+AOI_MAX_SPAN_KM = 600
+AOI_GOOD_COVERAGE = 0.5  # a pass must image at least half the area to be "good"
+AREA_STEP_S = 20  # ground-track sampling step when finding area passes
+
+# TLE freshness. SGP4 error grows with TLE age: fine for a few days, drifting
+# by kilometers after a week. Refresh with tools/spacetrack_gp.py.
+TLE_STALE_HOURS = 72
+TLE_OLD_HOURS = 168
+
 # Scoring
 CLOUD_USABLE_PCT = 30  # observed cloud below this counts as a usable image
 VERDICT_GOOD = 0.70
@@ -92,6 +104,14 @@ ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 LIVE_WEATHER_TIMEOUT_S = 6  # past this, /api/calculate falls back to climatology
 LIVE_WEATHER_TTL_S = 30 * 60  # reuse a point's forecast for 30 min
 LIVE_WEATHER_ROUND = 2  # decimal places, ~1 km: nearby clicks share a forecast
+GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
+GEOCODE_TTL_S = 24 * 3600
+
+# Cloud overlay: a CLOUD_GRID_N x CLOUD_GRID_N grid of forecast points centered
+# on the target, fetched in one multi-location call (49 Open-Meteo "locations").
+CLOUD_GRID_N = 7
+CLOUD_GRID_SPAN_DEG = 6.0
+
 TRAIN_START = "2023-09-01"
 TRAIN_END = "2026-09-01"
 

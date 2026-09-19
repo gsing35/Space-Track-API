@@ -86,8 +86,16 @@ def model_score(forecast_cloud_pct, lead_hours, when, lat, lon, clim=None, forec
     return round(clear * daylight, 4)
 
 
-def limited_by(clear, daylight, max_elevation_deg):
-    """The main thing standing between this pass and a good image, or None."""
+def _partial(coverage):
+    return coverage is not None and coverage < config.AOI_GOOD_COVERAGE
+
+
+def limited_by(clear, daylight, max_elevation_deg, coverage=None):
+    """The main thing standing between this pass and a good image, or None.
+
+    `coverage` (0-1) is the share of an area target the pass images; None for
+    point targets.
+    """
     if daylight <= 0.0:
         return "night"
     if clear < config.VERDICT_MARGINAL:
@@ -96,16 +104,23 @@ def limited_by(clear, daylight, max_elevation_deg):
         return "light" if daylight < 1.0 else "clouds"
     if max_elevation_deg < config.GOOD_ELEV_DEG:
         return "geometry"
+    if _partial(coverage):
+        return "coverage"
     return None
 
 
-def verdict_for(score, max_elevation_deg):
+def verdict_for(score, max_elevation_deg, coverage=None):
     """good / marginal / bad.
 
     A confident forecast at low elevation is only marginal: a shallow pass
-    means a long atmospheric path and an oblique view.
+    means a long atmospheric path and an oblique view. So is a pass that
+    images less than AOI_GOOD_COVERAGE of an area target.
     """
-    if score >= config.VERDICT_GOOD and max_elevation_deg >= config.GOOD_ELEV_DEG:
+    if (
+        score >= config.VERDICT_GOOD
+        and max_elevation_deg >= config.GOOD_ELEV_DEG
+        and not _partial(coverage)
+    ):
         return "good"
     if score >= config.VERDICT_MARGINAL:
         return "marginal"
@@ -114,7 +129,7 @@ def verdict_for(score, max_elevation_deg):
 
 def score_pass(
     forecast_cloud_pct, lead_hours, when, max_elevation_deg, lat, lon, clim=None,
-    forecast_available=True,
+    forecast_available=True, coverage=None,
 ):
     """All three scores, the verdict, and what limits the pass."""
     clear = clear_probability(
@@ -128,8 +143,8 @@ def score_pass(
             "forecast_only": forecast_only_score(forecast_cloud_pct),
             "climatology": round(climatology_score(clim), 4),
         },
-        "verdict": verdict_for(model, max_elevation_deg),
-        "limited_by": limited_by(clear, daylight, max_elevation_deg),
+        "verdict": verdict_for(model, max_elevation_deg, coverage),
+        "limited_by": limited_by(clear, daylight, max_elevation_deg, coverage),
     }
 
 
