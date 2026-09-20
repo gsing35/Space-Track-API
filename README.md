@@ -11,10 +11,6 @@ Built at VT Hacks. Python + FastAPI backend, CesiumJS globe, no build step, no d
 
 ---
 
-> **TODO — screenshot 1 (hero).** The full app: globe with satellite orbits and their
-> ground swaths, one swath highlighted gold over the target, dashboard panel on the left.
-> Save as `docs/images/hero.png`.
-
 ![ClearShot main view](docs/images/hero.png)
 
 ## The problem
@@ -42,19 +38,9 @@ picture, and how much should you trust that?**
 - **Shows its own staleness.** A badge reports how old the orbit data is, because SGP4
   predictions drift after about a week.
 
-> **TODO — screenshot 2 (the answer).** Close-up of the left panel: the green
-> "First likely clear image" headline, the four probability boxes and the chart.
-> Save as `docs/images/panel.png`.
-
 ![Time-to-image panel](docs/images/panel.png)
 
-> **TODO — screenshot 3 (area target).** An area drawn on the globe with the table showing
-> per-pass coverage percentages. Save as `docs/images/area.png`.
-
 ![Area target](docs/images/area.png)
-
-> **TODO — screenshot 4 (cloud overlay).** The cloud overlay on, mid-timeline, with its
-> dashed boundary and the legend visible. Save as `docs/images/clouds.png`.
 
 ![Cloud overlay](docs/images/clouds.png)
 
