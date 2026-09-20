@@ -1,250 +1,110 @@
-# ClearShot — satellite imaging windows
+# ClearShot
 
-**When is the soonest a satellite can take a clear picture of this place?**
+**When is the soonest a satellite can take a clear photo of this place?**
 
-ClearShot combines orbit prediction, live cloud forecasts, sunlight and a trained model to
-answer that for any point or area on Earth, and shows it on a 3D globe. The repository also
-contains the Space-Track tool that caches the satellite catalog the predictions run on.
+Satellites fly fixed schedules, and most of their passes are wasted: clouds block the view,
+or the target is in darkness. ClearShot combines orbit prediction, live cloud forecasts,
+sunlight and a trained model to tell you which passes will actually produce a usable image —
+and how soon to expect one.
 
-- `backend/` — the prediction API (Python, FastAPI)
-- `frontend/` — the globe (one HTML file, CesiumJS)
-- `data/` — the cached catalog, the trained model and generated results
-- `tools/spacetrack_gp.py` — refreshes the catalog snapshot from Space-Track
+Built at VT Hacks. Python + FastAPI backend, CesiumJS globe, no build step, no database.
 
-## Getting started from scratch
+---
 
-Everything below assumes a fresh computer with nothing installed. Run every command from
-the project folder.
+> **TODO — screenshot 1 (hero).** The full app: globe with satellite orbits and their
+> ground swaths, one swath highlighted gold over the target, dashboard panel on the left.
+> Save as `docs/images/hero.png`.
 
-### 1. Install Python 3.11 or newer
+![ClearShot main view](docs/images/hero.png)
 
-Check what you have:
+## The problem
 
-```bash
-python3 --version
-```
+You need a satellite photo of a specific place: a flood, a wildfire, a port. Looking up
+when a satellite flies over is easy — but flying over is not enough. About two-thirds of
+Earth is under cloud at any moment, and optical sensors see nothing at night. Most "the
+satellite is overhead" moments produce an unusable image.
 
-If that prints 3.11 or higher, skip ahead. Otherwise:
+ClearShot answers the operational question instead: **when do you actually get the
+picture, and how much should you trust that?**
 
-| System | How to install |
-| --- | --- |
-| **Windows** | Install from [python.org/downloads](https://www.python.org/downloads/) and **tick "Add Python to PATH"** in the installer. Use `python` instead of `python3` in the commands below. |
-| **macOS** | `brew install python` ([Homebrew](https://brew.sh) first if needed), or the installer from python.org |
-| **Ubuntu / Debian** | `sudo apt update && sudo apt install python3 python3-venv python3-pip git` |
-| **Fedora** | `sudo dnf install python3 python3-pip git` |
+## What it does
 
-Developed and tested on Python 3.12.
+- **Time-to-image, not a pass list.** The headline is one answer: the earliest pass likely
+  to produce a usable image, plus the probability of getting one within 24, 48 and 72 hours.
+- **Any point or area.** Click the globe, type coordinates, search a place name, or draw a
+  polygon. Areas report what percentage of the region each pass actually images.
+- **Honest probabilities.** A model trained on a year of real forecasts versus observed
+  outcomes, validated on cities it never saw in training.
+- **Explains itself.** Every pass says what limits it: `night`, `clouds`, `light`,
+  `geometry` or `coverage`.
+- **Degrades instead of failing.** No internet means cloud forecasts fall back to
+  historical averages for that location, and the app keeps working.
+- **Shows its own staleness.** A badge reports how old the orbit data is, because SGP4
+  predictions drift after about a week.
 
-### 2. Get the code
+> **TODO — screenshot 2 (the answer).** Close-up of the left panel: the green
+> "First likely clear image" headline, the four probability boxes and the chart.
+> Save as `docs/images/panel.png`.
 
-```bash
-git clone https://github.com/<your-account>/Space-Track-API.git
-cd Space-Track-API
-```
+![Time-to-image panel](docs/images/panel.png)
 
-No Git? Install it with the commands above, or download the repository as a ZIP from
-GitHub and unzip it.
+> **TODO — screenshot 3 (area target).** An area drawn on the globe with the table showing
+> per-pass coverage percentages. Save as `docs/images/area.png`.
 
-### 3. Create a virtual environment and install the dependencies
+![Area target](docs/images/area.png)
 
-A virtual environment keeps these packages out of your system Python. Some Linux
-distributions require one.
+> **TODO — screenshot 4 (cloud overlay).** The cloud overlay on, mid-timeline, with its
+> dashed boundary and the legend visible. Save as `docs/images/clouds.png`.
 
-```bash
-python3 -m venv .venv                     # Windows: python -m venv .venv
-.venv/bin/pip install -r requirements.txt # Windows: .venv\Scripts\pip install -r requirements.txt
-```
+![Cloud overlay](docs/images/clouds.png)
 
-That installs FastAPI and uvicorn (the web API), Skyfield (orbit math), scikit-learn and
-numpy (the model), and requests (the Space-Track tool). About 300 MB, a minute or two.
+## Quickstart
 
-Every command in this README uses `.venv/bin/python` and `.venv/bin/uvicorn`, so you never
-have to "activate" anything. On Windows the path is `.venv\Scripts\python`.
-
-### 4. Add a Cesium token for the globe
-
-The globe's map imagery comes from Cesium ion, which is free but needs a token.
-
-1. Sign up at [cesium.com/ion](https://cesium.com/ion/signup) (free).
-2. Open **Access Tokens** and copy the default token.
-3. Create a file called `config.js` **in the project root** containing exactly:
-
-   ```javascript
-   const CESIUM_TOKEN = 'paste-your-token-here';
-   ```
-
-`config.js` is gitignored, so your token is never committed. Without it the dashboard still
-works, but the Earth does not render.
-
-### 5. Run it
-
-Two terminals, both in the project folder.
-
-**Terminal 1 — the prediction API:**
+Requires **Python 3.11+** (developed on 3.12). Full from-scratch instructions, including
+installing Python and troubleshooting, are in [docs/setup.md](docs/setup.md).
 
 ```bash
-.venv/bin/uvicorn backend.main:app --port 8000
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 ```
 
-**Terminal 2 — the web page:**
+Add a free [Cesium ion](https://cesium.com/ion/signup) token to `config.js` in the project
+root (gitignored), or the globe will not render:
+
+```javascript
+const CESIUM_TOKEN = 'paste-your-token-here';
+```
+
+Then run two terminals from the project root:
 
 ```bash
-python3 -m http.server 5500
+.venv/bin/uvicorn backend.main:app --port 8000   # the prediction API
+python3 -m http.server 5500                      # the web page
 ```
 
-Then open **http://localhost:5500/frontend/index.html**.
+Open **http://localhost:5500/frontend/index.html**.
 
-You should see the globe with satellites, and a panel reading "First likely clear image".
-Click the globe, type coordinates, search a place, or draw an area to retask it.
+## How it works
 
-Restart Terminal 1 after changing any backend file, or start it with `--reload`.
+1. **Where the satellites are.** 8 Earth-observation satellites (Landsat 8/9,
+   Sentinel-2A/B/C, Terra, Aqua, plus the ISS as a visual reference) are read from a cached
+   Space-Track catalog on disk. The live Space-Track API is never called at request time.
+2. **When they pass overhead.** SGP4 via Skyfield finds every rise/peak/set over the target
+   in the next 72 hours, above 20° elevation.
+3. **Whether the camera sees it.** A pass only counts if the sensor's ground swath covers
+   the target — 185 km for Landsat, 290 km for Sentinel-2, 2,330 km for MODIS.
+4. **Whether there is light and a clear sky.** Sun elevation gates the pass; hourly cloud
+   forecasts come from Open-Meteo for that exact point.
+5. **How much to trust the forecast.** The model converts forecast cloud and lead time into
+   a calibrated probability of a usable image.
+6. **How soon you get a picture.** Passes sharing the same sky are grouped so they count as
+   one chance, then combined into the time-to-image answer.
 
-### 6. Check that it works
+Full detail, with file and line references, is in [TECH_AUDIT.md](TECH_AUDIT.md).
+
+## API
 
 ```bash
-curl http://localhost:8000/api/health
-```
-
-`"status": "ok"` means the API is up, and `tle_max_age_hours` tells you how old the orbit
-data is.
-
-### Troubleshooting
-
-| Symptom | Cause and fix |
-| --- | --- |
-| Panel says "Tasking Failed. API Unreachable." | Terminal 1 isn't running, or it's on a different port. |
-| Stars but no Earth | `config.js` is missing, or its token is wrong. Open the browser console (F12); a `config.js` error means the file has a typo. Make sure its first line is `const CESIUM_TOKEN = ...`. |
-| `externally-managed-environment` from pip | You skipped the virtual environment in step 3. |
-| `No module named fastapi` | You're using system Python. Use `.venv/bin/python`. |
-| Passes show but every score is climatology | The internet is unreachable, so cloud forecasts fall back to historical averages. The demo still runs. |
-| `data/model.pkl` missing | Retrain: `.venv/bin/python -m backend.train_model` (needs internet, takes a few minutes). |
-
-### Optional: refreshing the satellite catalog
-
-`data/gp_catalog.json` ships with the repository, so the project runs without a Space-Track
-account. The orbit data ages, though; after about a week predictions drift by kilometers.
-The dashboard's TLE badge turns yellow, then red, to warn you.
-
-To refresh it, you need your own free Space-Track account. Accounts are personal and
-rate-limited to roughly 30 requests per minute, and abuse gets them suspended, so run this
-by hand only when you actually need fresh data.
-
-1. Create an account: https://www.space-track.org/auth/createAccount
-2. Save your credentials:
-
-   ```bash
-   cp .env.example .env
-   # edit .env and set SPACETRACK_USER and SPACETRACK_PASS
-   ```
-
-   `.env` is gitignored. Never commit or share it.
-3. Fetch a new snapshot:
-
-   ```bash
-   .venv/bin/python tools/spacetrack_gp.py
-   ```
-
-The rest of this README covers that tool and how the prediction backend works.
-
-## Space-Track catalog tool
-
-`tools/spacetrack_gp.py` fetches a full GP (general perturbations) catalog snapshot from
-[Space-Track.org](https://www.space-track.org) and caches it to a local JSON file,
-optionally exporting a classic 3-line TLE file. Everything else in the project reads that
-cached file and never calls Space-Track.
-
-### Usage
-
-```bash
-.venv/bin/python tools/spacetrack_gp.py                 # use cache if <8h old, else fetch
-.venv/bin/python tools/spacetrack_gp.py --force         # always hit the API
-.venv/bin/python tools/spacetrack_gp.py --max-age 6     # treat cache as stale after 6 hours
-.venv/bin/python tools/spacetrack_gp.py --no-tle        # cache the JSON, skip the .tle file
-```
-
-Every run leaves you with two files:
-
-| File | What it is |
-| --- | --- |
-| `data/gp_catalog.json` | The full cached snapshot — every GP field for every object |
-| `data/sats.tle` | Standard 3LE text, ready for STK / GMAT / gpredict / `sgp4` |
-
-### Pulling individual satellites back out
-
-`--find` reads the local cache only — no login, no API call, nothing against your rate
-limit. It takes a NORAD ID or a name substring (case-insensitive), comma-separated for
-several at once:
-
-```bash
-.venv/bin/python tools/spacetrack_gp.py --find 25544             # the ISS, by NORAD ID
-.venv/bin/python tools/spacetrack_gp.py --find starlink          # every Starlink, by name
-.venv/bin/python tools/spacetrack_gp.py --find 25544,iridium     # union of both
-.venv/bin/python tools/spacetrack_gp.py --find starlink --all    # don't cap at 50 results
-```
-
-Matching TLEs go to **stdout** and all notes to **stderr**, so you can redirect straight
-into a file that a TLE parser will accept:
-
-```bash
-.venv/bin/python tools/spacetrack_gp.py --find 25544 > iss.tle
-```
-
-Output is capped at 50 matches by default (`--find starlink` hits thousands); use
-`--limit N` or `--all`.
-
-### The cache file
-
-`data/gp_catalog.json` looks like this:
-
-```json
-{
-  "fetched_at": "2026-09-18T12:00:00+00:00",
-  "source": "space-track.org basicspacedata/query/class/gp",
-  "query": "/class/gp/decay_date/null-val/epoch/%3Enow-30/orderby/norad_cat_id/format/json",
-  "count": 27000,
-  "records": [ { "NORAD_CAT_ID": "25544", "OBJECT_NAME": "ISS (ZARYA)", "TLE_LINE1": "1 ...", "TLE_LINE2": "2 ...", "...": "..." } ]
-}
-```
-
-## How the API call works
-
-1. `POST https://www.space-track.org/ajaxauth/login` with form fields `identity`
-   and `password`. Success returns an empty body and a session cookie; failure
-   returns HTTP 200 with `{"Login":"Failed"}`, so check the body, not the status.
-2. `GET https://www.space-track.org/basicspacedata/query/class/gp/...` reusing that
-   cookie. The query path is built from `/predicate/value` pairs; `>` must be
-   URL-encoded as `%3E`.
-3. `GET https://www.space-track.org/ajaxauth/logout` when done.
-
-## Rate limits
-
-Space-Track allows **fewer than 30 requests/minute and 300 requests/hour**. The
-full catalog only updates a few times a day, so refresh it every several hours at
-most — that is what the cache-age check is for. Abusive polling gets accounts
-suspended.
-
-## Useful query variations
-
-Swap `GP_CATALOG_QUERY` in the script, or pass a different query to
-`fetch_gp_catalog()`:
-
-| Goal | Query path |
-| --- | --- |
-| One object | `/class/gp/NORAD_CAT_ID/25544/format/json` |
-| Everything ever catalogued (incl. decayed) | `/class/gp/orderby/NORAD_CAT_ID/format/json` |
-| Only recently updated elsets | `/class/gp/EPOCH/%3Enow-1/orderby/NORAD_CAT_ID/format/json` |
-| Starlink by name | `/class/gp/OBJECT_NAME/~~STARLINK/format/json` |
-| Raw 3LE instead of JSON | `...format/3le` (returns text, not JSON) |
-| Latest-only, faster | use `class/gp` (already latest); `gp_history` for past elsets |
-
-## Pass prediction backend
-
-`backend/` answers one question for any point on Earth: **over the next 72 hours, which
-Earth-observation satellite passes will actually produce a usable image of this spot?**
-
-```bash
-.venv/bin/python -m backend.train_model     # fit the model (offline after first run)
-.venv/bin/python -m backend.generate        # static Blacksburg -> data/passes.json
 .venv/bin/uvicorn backend.main:app --port 8000
 ```
 
@@ -259,7 +119,7 @@ Earth-observation satellite passes will actually produce a usable image of this 
 | `GET /api/health` | Liveness, file age, pass count | |
 
 A pass counts only if it is **above 20°**, the satellite's **sensor swath covers the point**,
-and it happens in **daylight** — optical sensors need reflected sunlight. Each pass then gets
+and it happens in **daylight** — optical sensors need reflected sunlight. Each pass gets
 three comparable probabilities of a usable image (observed cloud cover below 30%):
 
 | Score | Meaning |
@@ -268,8 +128,6 @@ three comparable probabilities of a usable image (observed cloud cover below 30%
 | `climatology` | This location's historical clear-sky rate for the month |
 | `model` | Trained model, zeroed in darkness |
 
-`lead_time_hours` is measured from generation time, so `/api/passes` quietly recomputes once
-the file is over an hour old (in memory only; if that fails it serves the file).
 
 ### Optimizing for time-to-image
 
@@ -353,6 +211,46 @@ What those numbers do and don't say:
   forecast and its lead time. Full table in `data/model_report.json`.
 - "Observed" is ERA5 reanalysis — itself a model, not satellite cloud masks.
 
+## Project layout
+
+```
+backend/     prediction API (FastAPI) — 12 modules, 2,174 lines
+  main.py         endpoints
+  passes.py       SGP4 passes, point and area
+  weather.py      Open-Meteo: forecast, climatology, geocoding, cloud grid
+  scoring.py      probabilities and verdicts
+  acquisition.py  time-to-image
+  aoi.py          area targets
+  solar.py        sun elevation
+  features.py     model features, shared by training and scoring
+  catalog.py      reads the cached catalog, picks our satellites
+  config.py       every tunable constant
+  train_model.py  offline training
+frontend/    the globe — one HTML file, CesiumJS + satellite.js
+data/        cached catalog, trained model, generated results
+tools/       Space-Track catalog fetcher
+docs/        setup, Space-Track tool reference, screenshots
+```
+
+## Limitations
+
+- **72-hour horizon.** Cloud forecasts stop being trustworthy past about 3 days, and the
+  model was trained on lead times of 0–3 days.
+- **You cannot task these satellites.** They fly fixed schedules; ClearShot tells you which
+  of the passes you already get are worth using.
+- **Probabilities assume weather windows are independent.** When cloud persists for days the
+  combined odds read slightly optimistic. The recommended pass does not depend on that.
+- **"Observed" cloud is ERA5 reanalysis**, itself a model, not satellite cloud masks.
+- **Areas are capped at 600 km across**, because one cloud forecast at the centre cannot
+  honestly speak for a larger region.
+
+## Roadmap
+
+- Commercial satellites that can be pointed, where the same scoring picks a window to buy.
+- More weather inputs than cloud cover alone: ensemble spread, cloud layers, haze.
+- Saved targets with alerts when a good window opens.
+- Linking each past pass to the actual public image it produced.
+
 ## Data source & attribution
 
 Orbital data in this repository comes from [Space-Track.org](https://www.space-track.org),
@@ -374,22 +272,5 @@ decay/reentry data. The citation above is the condition being met; keep it with 
 if you redistribute it further, and cite Space-Track in any published analysis derived
 from it.
 
-### You need your own account
-
-The committed snapshot is free to use, but the API is not open. Space-Track's User
-Agreement is explicit:
-
-> The User agrees he or she will only enter this site utilizing his or her own username
-> and password. The User agrees not to share, assign or transfer his or her username or
-> password to another. Each individual user or entity is required to obtain a separate
-> account.
-
-Register at https://www.space-track.org/auth/createAccount and put your own credentials in
-`.env`. Never commit `.env` — it is gitignored for that reason.
-
-### The snapshot goes stale
-
-TLEs decay in accuracy within days, and low-perigee objects drift fastest. `fetched_at` at
-the top of `data/gp_catalog.json` records when the committed copy was pulled. For anything
-operational, run `.venv/bin/python tools/spacetrack_gp.py --force` and use fresh elements rather than the
-snapshot in this repo.
+Space-Track credentials, catalog refreshing and redistribution terms:
+[docs/spacetrack-tool.md](docs/spacetrack-tool.md).
